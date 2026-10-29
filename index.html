@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signals in Six Sessions — exam crash course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3F5F8;
+    --panel:#FFFFFF;
+    --ink:#14212E;
+    --muted:#5A6B7B;
+    --navy:#1E3A5F;
+    --navy-soft:#3A5A7E;
+    --amber:#B45309;
+    --amber-bright:#E8830C;
+    --ok:#1F7A4D;
+    --bad:#B42318;
+    --line:#D5DCE4;
+    --grid:rgba(30,58,95,.07);
+    --code-bg:#0F1B29;
+    --code-ink:#DCE6F2;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:28px 28px;
+    color:var(--ink);
+    font-family:"IBM Plex Sans",Arial,sans-serif;
+    font-size:16px;
+    line-height:1.6;
+  }
+  h1,h2,h3{font-family:"Space Grotesk",-apple-system,sans-serif;line-height:1.2;margin:0}
+  code,.mono{font-family:"IBM Plex Mono",Consolas,monospace}
+  a{color:var(--navy)}
+  button{font:inherit;cursor:pointer}
+  :focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+  header{
+    position:sticky;top:0;z-index:10;
+    background:var(--panel);
+    border-bottom:1px solid var(--line);
+    padding:12px 24px;
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  }
+  .mark{display:flex;align-items:center;gap:10px}
+  .mark .wave{width:34px;height:22px}
+  .mark strong{font-family:"Space Grotesk";font-size:17px;letter-spacing:-.01em}
+  .mark span{color:var(--muted);font-size:13px}
+  .progress-wrap{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+  .progress-bar{width:150px;height:8px;background:#E5EAF0;border-radius:4px;overflow:hidden}
+  .progress-bar i{display:block;height:100%;background:var(--amber-bright);width:0;transition:width .4s}
+  .reset-link{background:none;border:none;color:var(--muted);font-size:13px;text-decoration:underline;padding:0}
+
+  main{max-width:880px;margin:0 auto;padding:0 24px 90px}
+  section{display:none}
+  section.on{display:block}
+
+  /* ---------- home ---------- */
+  .hero{padding:44px 0 8px}
+  .hero h1{font-size:clamp(30px,5vw,44px);letter-spacing:-.02em;max-width:16ch}
+  .hero p{color:var(--muted);max-width:62ch;margin:12px 0 0}
+  .scope{border:1px solid var(--line);background:var(--panel);border-radius:10px;margin:28px 0 6px;overflow:hidden}
+  .scope canvas{display:block;width:100%;height:172px}
+  .scope-controls{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
+  .scope-controls .lbl{font-family:"IBM Plex Mono"}
+  .winbtn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:3px 12px;font-family:"IBM Plex Mono";font-size:13px}
+  .winbtn[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .scope-hint{margin-left:auto}
+
+  .lessons{margin-top:34px}
+  .group-label{
+    font-family:"Space Grotesk";font-size:14px;font-weight:600;color:var(--muted);
+    margin:26px 0 0;letter-spacing:.01em;
+  }
+  .lesson-row{
+    display:flex;align-items:center;gap:18px;
+    padding:18px 6px;border-top:1px solid var(--line);
+  }
+  .lesson-row:last-of-type{border-bottom:1px solid var(--line)}
+  .lesson-row .num{
+    font-family:"Space Grotesk";font-size:26px;color:var(--navy);
+    width:64px;flex-shrink:0;font-weight:600;
+  }
+  .lesson-row .lt{flex:1;min-width:0}
+  .lesson-row .lt h2{font-size:19px;font-weight:600}
+  .lesson-row .lt p{margin:3px 0 0;color:var(--muted);font-size:14px}
+  .score-chip{font-family:"IBM Plex Mono";font-size:13px;color:var(--muted);flex-shrink:0}
+  .score-chip.done{color:var(--ok)}
+  .rowbtn{
+    flex-shrink:0;border:1px solid var(--navy);background:var(--navy);color:#fff;
+    border-radius:7px;padding:7px 16px;font-weight:500;font-size:14px;
+  }
+  .rowbtn:hover{background:var(--navy-soft)}
+  .final-row{
+    margin-top:30px;padding:22px;background:var(--navy);color:#fff;border-radius:10px;
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  }
+  .final-row h2{font-size:20px}
+  .final-row p{margin:4px 0 0;font-size:14px;color:#C9D6E4;max-width:52ch}
+  .final-row .rowbtn{background:var(--amber-bright);border-color:var(--amber-bright);color:#14212E;font-weight:600}
+  .final-res{font-family:"IBM Plex Mono";font-size:14px;color:#fff}
+
+  /* ---------- lesson ---------- */
+  .back-link{background:none;border:none;padding:0;font-size:14px;color:var(--muted);text-decoration:underline;margin:26px 0 0}
+  .lesson-head{margin:14px 0 6px;display:flex;gap:16px;align-items:baseline}
+  .lesson-head .num{font-family:"Space Grotesk";font-size:30px;color:var(--amber-bright);font-weight:700;flex-shrink:0}
+  .lesson-head h1{font-size:clamp(26px,4vw,36px);letter-spacing:-.02em}
+  .blurb{color:var(--muted);max-width:64ch;margin:8px 0 0}
+  .lesson-body{max-width:72ch}
+  .lesson-body h2{font-size:21px;margin:38px 0 10px}
+  .lesson-body p{margin:10px 0}
+  .def{
+    background:var(--panel);border:1px solid var(--line);
+    border-radius:8px;padding:14px 18px;margin:14px 0;
+  }
+  .def .tag{display:block;font-family:"IBM Plex Mono";font-size:12px;color:var(--amber);margin-bottom:4px}
+  .pipe{
+    display:flex;align-items:center;flex-wrap:wrap;gap:6px;
+    font-family:"IBM Plex Mono";font-size:13.5px;margin:14px 0;
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 16px;
+  }
+  .pipe b{color:var(--navy);font-weight:500}
+  .pipe .arr{color:var(--amber-bright);font-weight:700;padding:0 3px}
+  ul.tight{margin:8px 0;padding-left:1.2em}
+  ul.tight li{margin:5px 0}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14.5px;background:var(--panel)}
+  th,td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
+  th{font-family:"Space Grotesk";font-weight:600;background:#EEF2F6}
+  pre{
+    background:var(--code-bg);color:var(--code-ink);border-radius:8px;
+    padding:16px 18px;overflow-x:auto;font-size:13.5px;line-height:1.55;margin:14px 0;
+  }
+  pre code{font-family:"IBM Plex Mono",monospace}
+  .cmt{color:#7E93AC}.fn{color:#F2B705}.str{color:#9AD0A8}.kw{color:#E8956B}
+
+  /* ---------- quiz ---------- */
+  .quiz{margin-top:44px;padding-top:8px}
+  .quiz h2{font-size:22px}
+  .qcard{margin:22px 0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+  .qcard fieldset{border:none;margin:0;padding:0}
+  .qcard .qtag{font-family:"IBM Plex Mono";font-size:12px;color:var(--amber);margin-bottom:6px}
+  .qcard .qq{font-weight:600;margin-bottom:10px}
+  .opt{
+    display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;
+    border:1px solid var(--line);background:#fff;border-radius:8px;
+    padding:9px 13px;margin:7px 0;font-size:15px;
+  }
+  .opt:hover:not(:disabled){border-color:var(--navy)}
+  .opt .letter{font-family:"IBM Plex Mono";color:var(--muted);flex-shrink:0}
+  .opt.correct{border-color:var(--ok);background:#EDF7F1}
+  .opt.wrong{border-color:var(--bad);background:#FBEEEC}
+  .opt:disabled{cursor:default}
+  .why{font-size:14px;margin:10px 0 2px;padding:10px 14px;border-radius:8px;display:none}
+  .why.ok{background:#EDF7F1;color:var(--ok);display:block}
+  .why.no{background:#FBEEEC;color:var(--bad);display:block}
+  .quiz-finish{margin-top:26px;text-align:center}
+  .quiz-finish .big{font-family:"Space Grotesk";font-size:26px;font-weight:600}
+  .quiz-finish p{color:var(--muted)}
+  .nextbtn{border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:7px;padding:9px 20px;font-size:15px}
+  .lesson-nav{display:flex;gap:12px;margin:44px 0 0;border-top:1px solid var(--line);padding-top:20px}
+  .lesson-nav .spacer{flex:1}
+  .ghostbtn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:9px 16px;font-size:14px}
+  .ghostbtn:hover{border-color:var(--navy)}
+
+  .exam-result{margin-top:24px;padding:22px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+  .exam-result .big{font-family:"Space Grotesk";font-size:30px;font-weight:700}
+  .verdict-ok{color:var(--ok)}
+  .verdict-no{color:var(--bad)}
+  .small{font-size:13px;color:var(--muted)}
+
+  @media (max-width:640px){
+    .lesson-row{flex-wrap:wrap}
+    .lesson-row .num{width:auto}
+    .score-chip{order:3}
+    header{padding:10px 14px}
+    main{padding:0 14px 80px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .progress-bar i{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark">
+    <svg class="wave" viewBox="0 0 68 44" aria-hidden="true">
+      <path d="M2 22 L8 22 L12 6 L16 38 L20 22 L38 22 L44 22 L48 6 L52 38 L56 22 L66 22"
+            fill="none" stroke="#E8830C" stroke-width="3" stroke-linejoin="round"/>
+    </svg>
+    <strong>Signals in Six Sessions</strong>
+    <span>exam crash course</span>
+  </div>
+  <div class="progress-wrap">
+    <span id="progress-label">0%</span>
+    <div class="progress-bar"><i id="progress-fill" aria-hidden="true"></i></div>
+    <button class="reset-link" id="reset" type="button">Reset progress</button>
+  </div>
+</header>
+
+<main>
+  <!-- ============ HOME ============ -->
+  <section id="view-home" class="on">
+    <div class="hero">
+      <h1>Six sessions, three bonuses, one evening, exam ready.</h1>
+      <p>Your signal-processing decks distilled into sessions 01–06, plus three bonus lessons condensed from the audio-DSP lecture PDFs. Read the notes, test yourself after each lesson, then take the mixed final check. Scores are saved in this browser.</p>
+    </div>
+
+    <div class="scope" aria-label="Interactive demo: a noisy signal and its moving average">
+      <canvas id="trace" width="840" height="172" role="img"
+        aria-label="Animated plot of a noisy sine wave and its averaged version"></canvas>
+      <div class="scope-controls">
+        <span>Try it — small window keeps detail, big window smooths more:</span>
+        <button class="winbtn" data-w="5"   aria-pressed="false" type="button">N = 5</button>
+        <button class="winbtn" data-w="15"  aria-pressed="true"  type="button">N = 15</button>
+        <button class="winbtn" data-w="40"  aria-pressed="false" type="button">N = 40</button>
+        <span class="scope-hint">moving average, from Session 04</span>
+      </div>
+    </div>
+
+    <div class="lessons" id="lesson-list"></div>
+
+    <div class="final-row">
+      <div style="flex:1;min-width:260px">
+        <h2>Final check</h2>
+        <p>Ten questions drawn from all nine topics, shuffled every run. Recommended once each lesson's quiz is done.</p>
+      </div>
+      <span class="final-res" id="exam-res">not attempted</span>
+      <button class="rowbtn" type="button" onclick="startExam()">Start final check</button>
+    </div>
+  </section>
+
+  <!-- ============ LESSON ============ -->
+  <section id="view-lesson">
+    <button class="back-link" type="button" onclick="go('home')">&larr; All lessons</button>
+    <div class="lesson-head">
+      <span class="num" id="lesson-num"></span>
+      <h1 id="lesson-title"></h1>
+    </div>
+    <p class="blurb" id="lesson-blurb"></p>
+    <div class="lesson-body" id="lesson-body"></div>
+    <div class="lesson-nav">
+      <button class="ghostbtn" id="prev-btn" type="button"></button>
+      <div class="spacer"></div>
+      <button class="ghostbtn" type="button" onclick="go('home')">Back to list</button>
+      <button class="ghostbtn" id="next-btn" type="button"></button>
+    </div>
+  </section>
+
+  <!-- ============ FINAL EXAM ============ -->
+  <section id="view-exam">
+    <button class="back-link" type="button" onclick="go('home')">&larr; All lessons</button>
+    <div class="lesson-head">
+      <h1 style="font-size:30px">Final check</h1>
+    </div>
+    <p class="blurb">Ten random questions across all nine topics. Grading happens when you press the button; review the explanations for anything you missed.</p>
+    <div id="exam-questions"></div>
+    <div style="margin-top:22px">
+      <button class="nextbtn" id="exam-submit" type="button" onclick="gradeExam()">Grade my answers</button>
+    </div>
+    <div id="exam-outcome"></div>
+  </section>
+</main>
+
+<script>
+/* ============================================================
+   Content — sessions 01–06 distilled from the course PPT decks,
+   bonus A–C condensed from the attached audio-DSP lecture PDFs.
+   ============================================================ */
+const D = {
+  "s1": {
+    num: "01", kind: "session", title: "Introduction to Signal Processing",
+    blurb: "What a signal is, how it becomes digital, and why we process it at all.",
+    body: [
+      {t:"text", html:"A <b>signal</b> is a representation of information that changes with respect to an independent variable (usually time). Everything measurable around us — sound, temperature, motion, light, biological activity — produces signals."},
+      {t:"def", tag:"definition", html:"<b>Signal:</b> a representation of information that changes with respect to an independent variable. Audio = sound pressure over time · ECG = electrical activity · Temperature = environmental change · Image = light intensity."},
+      {t:"h2", html:"Signals have dimensions"},
+      {t:"text", html:"<b>1-D:</b> audio (one value per time instant). <b>2-D:</b> an image (value per row/column). <b>Multi-dimensional:</b> video (2-D frames over time)."},
+      {t:"h2", html:"The signal processing workflow"},
+      {t:"pipe", html:"<b>Physical world</b> <span class='arr'>→</span> <b>Sensor / acquisition</b> <span class='arr'>→</span> <b>Signal representation</b> <span class='arr'>→</span> <b>Processing</b> <span class='arr'>→</span> <b>Analysis</b> <span class='arr'>→</span> <b>Information</b>"},
+      {t:"text", html:"Why bother? Real signals contain <b>noise</b>, unwanted variation, huge data volume, and hidden patterns. Processing removes noise, extracts useful information, and detects patterns."},
+      {t:"h2", html:"Analog vs digital"},
+      {t:"table", head:["Aspect","Analog","Digital"], rows:[
+        ["Values","Continuous","Discrete"],
+        ["Example","Vinyl, human voice","MP3, computer files"],
+        ["Noise","Degrades with each copy","Copies stay identical"],
+        ["Processing","Hardware dependent","Easy with computers"],
+        ["Storage","Physical medium","Files and memory"]]},
+      {t:"h2", html:"Continuous vs discrete time"},
+      {t:"text", html:"A <b>continuous-time</b> signal exists at every instant (a smoothly changing voltage). A <b>discrete-time</b> signal exists only at distinct, usually equally spaced samples — and that discrete version is what computers actually work with."},
+      {t:"text", html:"Converting analog to digital takes <b>two steps</b>: <b>sampling</b> at regular intervals and <b>quantizing</b> to a finite set of levels. More samples and levels mean a more faithful copy — at the cost of more data."},
+      {t:"h2", html:"The Python toolbox"},
+      {t:"code", html:"<span class='kw'>import</span> numpy <span class='kw'>as</span> np   <span class='cmt'># arrays</span>\n<span class='kw'>from</span> scipy <span class='kw'>import</span> signal <span class='cmt'># filters and transforms</span>\n<span class='kw'>import</span> matplotlib.pyplot <span class='kw'>as</span> plt  <span class='cmt'># plotting</span>\n<span class='kw'>import</span> librosa  <span class='cmt'># audio</span>\n\nt = np.linspace(<span class='fn'>0</span>, <span class='fn'>1</span>, <span class='fn'>1000</span>)\nsignal = np.sin(<span class='fn'>2</span>*np.pi*<span class='fn'>5</span>*t)  <span class='cmt'># 5 Hz sine</span>\nplt.plot(t, signal); plt.show()"}
+    ],
+    quiz:[
+      {q:"Which statement best defines a signal?", o:["A representation of information that changes with respect to an independent variable","Any file stored on a computer","Only electrical voltage measured over time","A mathematical function that must be periodic"], a:0,
+       why:"The deck's exact definition: information that changes with respect to an independent variable — commonly time, but not necessarily."},
+      {q:"An image is which kind of signal?", o:["Two-dimensional","One-dimensional","Zero-dimensional","Periodic"], a:0,
+       why:"Audio is 1-D (value per time instant), an image is 2-D (value per position), and video is multi-dimensional."},
+      {q:"Converting an analog signal to digital requires which two steps?", o:["Sampling and quantization","Filtering and smoothing","Encoding and decoding","Amplification and isolation"], a:0,
+       why:"Sampling measures the signal at regular time intervals; quantization rounds amplitudes to a finite set of levels. More of both = more faithful, more data."},
+      {q:"The same music is stored on vinyl and as MP3. Why do digital copies stay identical while vinyl copies degrade?", o:["Digital signals are discrete values that can be copied bit-for-bit; analog copies accumulate noise each time they are made","MP3 files are compressed, which automatically removes noise","Vinyl needles physically damage the file system","Analog signals cannot be copied at all"], a:0,
+       why:"From the analog vs digital table: analog noise 'degrades with each copy' while digital 'copies stay identical'."},
+      {q:"Put the workflow in the right order:", o:["Sensor / acquisition → signal representation → processing → analysis → information","Processing → analysis → sensor → acquisition → information","Analysis → information → processing → acquisition — they can happen in any order","Representation → physical world → processing → acquisition"], a:0,
+       why:"Physical world → sensor/acquisition → representation → processing → analysis → information is the canonical pipeline from Session 1."}
+    ]
+  },
+  "s2": {
+    num: "02", kind: "session", title: "Data Acquisition &amp; Signal Input",
+    blurb: "How a physical phenomenon becomes numbers a computer can hold — sensors, conditioning, ADC, sampling.",
+    body: [
+      {t:"text", html:"A computer cannot directly measure temperature, sound, acceleration or pressure. <b>Signal acquisition</b> is the process of measuring a physical phenomenon and converting it into a form a computer can process."},
+      {t:"pipe", html:"<b>Physical phenomenon</b> <span class='arr'>→</span> <b>Sensor</b> <span class='arr'>→</span> <b>Electrical signal</b> <span class='arr'>→</span> <b>Data acquisition</b> <span class='arr'>→</span> <b>Digital data</b>"},
+      {t:"text", html:"Quality matters: poor acquisition can introduce noise, distortion, missing information, wrong measurements and unwanted interference. <b>Good signal processing starts with good signal acquisition.</b>"},
+      {t:"h2", html:"Sensors vs transducers"},
+      {t:"def", tag:"definition", html:"<b>Sensor:</b> detects a physical quantity and produces a measurable response. <b>Transducer:</b> converts one form of energy into another. Temperature → thermistor · Sound → microphone · Acceleration → accelerometer · Light → photodiode · Pressure → pressure sensor."},
+      {t:"h2", html:"Signal conditioning"},
+      {t:"text", html:"Raw sensor output is often not ready for digital processing. Conditioning includes <b>amplification</b> (increase level), <b>filtering</b> (remove unwanted components), <b>isolation</b> (protect/separate circuits) and <b>level shifting</b> (adjust voltage range)."},
+      {t:"text", html:"Why it matters: a too-weak signal makes important variations hard to detect, noise becomes relatively significant, and the ADC never uses its available range effectively."},
+      {t:"h2", html:"The ADC: two distinct jobs"},
+      {t:"def", tag:"exam favorite", html:"<b>Sampling</b> determines <b>when</b> the signal is measured (how often). <b>Quantization</b> determines <b>which amplitude levels</b> can be represented (how finely). They are separate decisions."},
+      {t:"pipe", html:"<b>Analog signal</b> <span class='arr'>→</span> <b>Sampling</b> <span class='arr'>→</span> <b>Quantization</b> <span class='arr'>→</span> <b>Digital values</b>"},
+      {t:"h2", html:"Sampling rate"},
+      {t:"text", html:"The sampling rate decides how often the signal is measured. Low rate: less data, but may miss important changes. High rate: captures fast changes, at the cost of more data. Match the rate to the phenomenon: <b>temperature changes slowly, human movement moderately, speech faster, machine vibration rapidly.</b>"},
+      {t:"def", tag:"key number", html:"If fs = 1000 Hz, the system takes 1000 samples per second, so consecutive samples are separated by <b>1 ms</b>."},
+      {t:"h2", html:"In software"},
+      {t:"text", html:"Once acquired, the signal is a numerical array. Each value is the measurement at one sampling instant; with fs known, you can reconstruct the time axis exactly."},
+      {t:"pipe", html:"<b>Sensor</b> <span class='arr'>→</span> <b>Signal conditioning</b> <span class='arr'>→</span> <b>ADC</b> <span class='arr'>→</span> <b>DAQ device</b> <span class='arr'>→</span> <b>Computer</b> <span class='arr'>→</span> <b>Signal processing</b>"}
+    ],
+    quiz:[
+      {q:"A device that converts one form of energy into another is a…", o:["Transducer","Sensor","ADC","Filter"], a:0,
+       why:"A sensor detects a physical quantity; a transducer converts one form of energy into another (e.g. sound → electrical)."},
+      {q:"In the ADC process, which step determines WHEN the signal is measured, and which determines WHICH amplitude levels are representable?", o:["Sampling = when; quantization = which levels","Quantization = when; sampling = which levels","Both are about when","Both are about amplitude"], a:0,
+       why:"This distinction is called out explicitly in the deck: sampling decides when measurements are taken; quantization decides which amplitude levels can be represented."},
+      {q:"A sensor produces a very weak signal. What problem does amplification solve?", o:["Important variations become easier to detect and the ADC uses more of its range","It removes all high-frequency noise from the signal","It converts the analog signal into digital samples","It stores the signal in a file"], a:0,
+       why:"With a too-weak signal, variations are hard to detect, noise becomes relatively significant, and the ADC doesn't use its available range well. Amplification (one form of conditioning) fixes that before conversion."},
+      {q:"If the sampling rate is 1000 Hz, how much time separates consecutive samples?", o:["1 ms","10 ms","100 ms","0.1 ms"], a:0,
+       why:"1000 samples per second means each sample is separated by 1/1000 s = 1 ms."},
+      {q:"Which phenomenon most likely needs the highest sampling rate?", o:["Machine vibration","A slowly changing room temperature","Daily humidity levels","A plant's growth"], a:0,
+       why:"Sampling rate should match how fast the information changes: temperature is slow, movement moderate, speech faster, machine vibration rapid."}
+    ]
+  },
+  "s3": {
+    num: "03", kind: "session", title: "Signal Visualization",
+    blurb: "Turning numbers into something you can read — plots, axes, overlays and the questions a plot should answer.",
+    body: [
+      {t:"text", html:"A computer stores a signal as <code class='mono'>[0.12, 0.18, 0.25, 0.31, …]</code> — numbers that mean nothing until they are plotted against time. Visualization gives numerical data a visual structure so you can observe patterns, identify trends, spot unusual behavior and compare signals."},
+      {t:"h2", html:"What you can read from a plot"},
+      {t:"list", items:["<b>Amplitude</b> — the magnitude of the signal","<b>Trend</b> — the overall direction of change","<b>Peaks and valleys</b> — extreme values","<b>Oscillations</b> — repeated changes","<b>Events</b> — sudden changes or unusual behavior","<b>Noise</b> — unwanted fluctuations"]},
+      {t:"h2", html:"A basic plot in Python"},
+      {t:"code", html:"t = np.linspace(<span class='fn'>0</span>, <span class='fn'>2</span>, <span class='fn'>1000</span>)          <span class='cmt'># time axis</span>\nfrequency = <span class='fn'>2</span>  <span class='cmt'># Hz</span>\nsignal = np.sin(<span class='fn'>2</span>*np.pi*frequency*t)\n\nplt.figure(figsize=(<span class='fn'>10</span>, <span class='fn'>4</span>))\nplt.plot(t, signal, linewidth=<span class='fn'>2</span>)\nplt.xlabel(<span class='str'>\"Time (s)\"</span>); plt.ylabel(<span class='str'>\"Amplitude\"</span>)\nplt.title(<span class='str'>\"Sinusoidal Signal\"</span>, fontweight=<span class='str'>\"bold\"</span>)\nplt.grid(alpha=<span class='fn'>0.25</span>); plt.axhline(<span class='fn'>0</span>, linewidth=<span class='fn'>0.8</span>)\nplt.tight_layout(); plt.show()"},
+      {t:"h2", html:"Axes carry the meaning"},
+      {t:"text", html:"A meaningful plot identifies both axes: X can be time (s), sample number, or frequency (Hz); Y can be amplitude (V), acceleration (m/s²), temperature (°C). <b>A graph without meaningful labels is difficult to interpret.</b> A plot should answer a question about the signal — don't plot data just because you can."},
+      {t:"h2", html:"Multiple signals: overlay vs subplots"},
+      {t:"table", head:["Approach","Good for","Trade-off"], rows:[
+        ["Overlay (same graph)","Easy comparison, seeing relationships","Clutters quickly"],
+        ["Subplots (own graphs)","Cleaner, separate scales and labels","Needs more space"]]},
+      {t:"text", html:"Subplots let related signals (like accelerometer X/Y/Z, or multi-channel ECG) be viewed together while keeping separate scales and labels."},
+      {t:"text", html:"Interpretation checklist: is there a <b>trend</b>? <b>periodicity</b>? <b>events</b>? <b>noise</b>? Do multiple signals change <b>together</b>? Visualization is not the end — it guides the next decisions (filtering, feature extraction, analysis)."}
+    ],
+    quiz:[
+      {q:"In a time-domain plot, what does the horizontal axis represent?", o:["Time","Amplitude","Frequency always","Sample quality"], a:0,
+       why:"Time on the horizontal axis, amplitude on the vertical — that's what makes it a time-domain plot."},
+      {q:"You plot three accelerometer channels (X, Y, Z) with very different amplitude scales. Which approach makes sense and why?", o:["Subplots — each signal keeps its own scale, so large channels don't squash the small ones","Overlay — smaller signals must be divided until all amplitudes match","Overlay — because overlays are always cleaner","Neither; multi-channel signals cannot be visualized together"], a:0,
+       why:"Overlays are easy to compare but clutter and mix scales; subplots keep separate scales and labels while still viewing related signals together."},
+      {q:"Which of these is NOT something visualization itself does?", o:["It creates information that was not in the data","It reveals patterns, trends and unusual behavior","It makes numerical arrays interpretable","It helps you decide what to analyze next"], a:0,
+       why:"Visualization reveals what the data already contains; it cannot create new information — the same principle as filtering."},
+      {q:"What makes a signal plot meaningful to a reader?", o:["Clearly identified axes with units, and a descriptive title","Using as many colors as possible","Maximizing the y-axis range so the signal looks flat","Removing the grid in all cases"], a:0,
+       why:"Axes must state what they represent and in which units; a graph without meaningful labels is difficult to interpret."},
+      {q:"You plot a noisy temperature recording and see a slow upward drift plus small rapid fluctuations. What does this observation set up?", o:["Filtering decisions — e.g. high-pass for the drift, low-pass for the rapid fluctuations","Nothing; visualization is the final product of the workflow","The data must be re-acquired at a higher sampling rate immediately","Random noise can never identify a filtering need"], a:0,
+       why:"The deck: visualization identifies noise so you can make better processing decisions — it bridges to filtering, the next stage."}
+    ]
+  },
+  "s4": {
+    num: "04", kind: "session", title: "Digital Filtering",
+    blurb: "What filters do, the four basic types, and the moving average — the simplest smoothing filter you must know cold.",
+    body: [
+      {t:"text", html:"A measured signal contains the desired information <b>plus</b> noise, interference and artifacts. Filtering does not create information that was never measured — it reduces or emphasizes components so the useful part is easier to see."},
+      {t:"def", tag:"definition", html:"A <b>digital filter</b> processes a sequence of numerical samples to modify or remove selected components: <b>x[n] → y[n]</b>. The output is an <b>estimate</b> of the desired signal, not necessarily its exact original."},
+      {t:"h2", html:"What noise looks like"},
+      {t:"list", items:["<b>Random fluctuations</b> — small unpredictable variations","<b>High-frequency noise</b> — rapid changes superimposed on the signal","<b>Low-frequency drift</b> — slow unwanted changes","<b>Spikes</b> — sudden extreme values"]},
+      {t:"text", html:"Different noise forms need different filters — which is why the filter types matter."},
+      {t:"h2", html:"The four basic filter types"},
+      {t:"table", head:["Type","What passes","Classic use"], rows:[
+        ["<b>Low-pass</b>","Low frequencies","Removing high-frequency noise, smoothing sensor signals"],
+        ["<b>High-pass</b>","High frequencies","Removing slow drift, detecting rapid changes"],
+        ["<b>Band-pass</b>","A selected range","Keeping a frequency band (e.g. speech)"],
+        ["<b>Band-stop</b>","Everything but a rejected range","Removing a known interference frequency"]]},
+      {t:"h2", html:"Moving average"},
+      {t:"def", tag:"know by heart", html:"A moving average <b>replaces each sample with the average of the N neighboring samples</b> — a small window keeps detail with less smoothing; a large window smooths more but can remove important rapid changes. <b>More smoothing is not always better.</b>"},
+      {t:"code", html:"window = <span class='fn'>10</span>\nkernel = np.ones(window) / window      <span class='cmt'># averaging weights</span>\nfiltered = np.convolve(signal, kernel, mode=<span class='str'>\"same\"</span>)\n\n<span class='cmt'># evaluate: compare original vs filtered</span>\nplt.plot(signal, label=<span class='str'>\"Original\"</span>)\nplt.plot(filtered, label=<span class='str'>\"Filtered\"</span>)\nplt.legend(); plt.show()"},
+      {t:"h2", html:"The trade-off"},
+      {t:"def", tag:"the line to remember", html:"Too little filtering → noise remains. Too much → important features are lost. <b>The goal is not the smoothest signal. The goal is the most useful signal.</b>"}
+    ],
+    quiz:[
+      {q:"In filter notation, what do x[n] and y[n] mean?", o:["x[n] is the input signal, y[n] is the filtered output","x[n] is the noise, y[n] is the noise source","x[n] is the sampling rate, y[n] the amplitude","x[n] is the filter, y[n] the sensor"], a:0,
+       why:"x[n] = input signal, y[n] = filtered output. The filter transforms the input into a more useful output."},
+      {q:"You need to keep only the 40–60 Hz components of a signal and remove everything else. Which filter type?", o:["Band-pass","Low-pass","High-pass","Band-stop"], a:0,
+       why:"Band-pass allows a selected range to pass — exactly what 'keep 40–60 Hz' needs. Band-stop rejects a range instead."},
+      {q:"A sensor signal has a slowly wandering baseline that hides the rapid changes you care about. Which filter?", o:["High-pass","Low-pass","Band-stop","No filter can remove slow drift"], a:0,
+       why:"Slow drift is a low-frequency component; a high-pass filter attenuates lower frequencies and emphasizes rapid changes."},
+      {q:"You increase the moving-average window size from 5 to 80. What happens?", o:["More smoothing and noise reduction, but rapid changes may be washed out","Less smoothing, sharper detail","Nothing changes; window size only affects execution speed","The signal becomes noisier"], a:0,
+       why:"Large window = more smoothing, more noise reduction, more detail lost. More smoothing is not always better."},
+      {q:"Complete the sentence from the deck: “The goal is not the ___ signal. The goal is the ___ signal.”", o:["smoothest … most useful","smoothest … noisiest","longest … shortest","quantized … continuous"], a:0,
+       why:"Filtering is a trade-off: excessive smoothing destroys features. Aim for the most useful signal for your analysis."}
+    ]
+  },
+  "s5": {
+    num: "05", kind: "session", title: "Practical Digital Filtering",
+    blurb: "Choosing a filter deliberately, using SciPy correctly, and judging honestly whether it worked.",
+    body: [
+      {t:"def", tag:"rule", html:"Know your signal before filtering. Inspect it first for rapid fluctuations, slow trends, periodic behavior, sudden events, spikes and baseline drift. Filtering should be based on the <b>characteristics of the signal</b> and the <b>analysis objective</b>."},
+      {t:"h2", html:"Matching problems to filters"},
+      {t:"table", head:["Problem","Filter"], rows:[
+        ["High-frequency noise","Low-pass"],
+        ["Slow baseline drift","High-pass"],
+        ["Keep a frequency range","Band-pass"],
+        ["Remove a specific frequency","Band-stop"]]},
+      {t:"h2", html:"Cutoff frequency"},
+      {t:"text", html:"The <b>cutoff frequency (f<sub>c</sub>)</b> determines where the filter begins to attenuate: a low-pass passes frequencies below f<sub>c</sub> and attenuates those above. Choosing f<sub>c</sub> requires knowing the signal, the noise, and what information you want to preserve."},
+      {t:"h2", html:"Filtering with SciPy"},
+      {t:"code", html:"<span class='kw'>from</span> scipy <span class='kw'>import</span> signal\n\nb, a = signal.butter(\n    <span class='fn'>4</span>,            <span class='cmt'># filter order</span>\n    <span class='fn'>10</span>,           <span class='cmt'># cutoff frequency (Hz)</span>\n    btype=<span class='str'>\"lowpass\"</span>,   <span class='cmt'># filter type</span>\n    fs=<span class='fn'>1000</span>       <span class='cmt'># sampling frequency — must match your data</span>\n)\n\nfiltered = signal.filtfilt(b, a, x)  <span class='cmt'># zero-phase filtering</span>"},
+      {t:"text", html:"<b>signal.butter()</b> designs a Butterworth filter; the arguments are (order, cutoff, filter type, sampling frequency). <b>signal.filtfilt()</b> applies it forward and backward, which means <b>no phase distortion and no time delay</b>. Higher order → sharper transition near the cutoff, at more computational cost. Python lets you apply established algorithms without manually implementing every operation."},
+      {t:"text", html:"Know the practical knobs: <b>sampling frequency</b>, <b>filter type</b>, <b>cutoff frequency</b>, <b>filter order</b>, the signal's characteristics, the features you care about, and computational requirements. <b>There is no universally “best” filter</b> — the right choice depends on the signal and the objective."},
+      {t:"h2", html:"Did the filter work? Ask four questions"},
+      {t:"list", items:["Was unwanted noise reduced?","Were important features preserved?","Did the signal shape change significantly?","Was useful information lost?"]},
+      {t:"text", html:"A filter is successful only if the resulting signal is <b>more useful for the intended analysis</b> — noise reduction AND information preservation, checked side by side."},
+      {t:"pipe", html:"<b>Raw signal</b> <span class='arr'>→</span> <b>Visualize</b> <span class='arr'>→</span> <b>Identify noise</b> <span class='arr'>→</span> <b>Choose filter</b> <span class='arr'>→</span> <b>Compare results</b> <span class='arr'>→</span> <b>Analyze</b>"}
+    ],
+    quiz:[
+      {q:"Before choosing any filter, what should you do first?", o:["Inspect the signal: look for fluctuations, drift, periodicity, spikes","Pick the highest filter order available","Filter everything with a low-pass at 1 Hz","Convert the sampling rate to 1 Hz first"], a:0,
+       why:"Know your signal before filtering: filtering is based on the signal's characteristics and your analysis objective."},
+      {q:"Which call designs a low-pass Butterworth filter of order 4, cutoff 10 Hz, for data sampled at 1000 Hz?", o:["signal.butter(4, 10, btype=\"lowpass\", fs=1000)","signal.butter(10, 4, btype=\"lowpass\", fs=1000)","signal.butter(fs=1000, btype=\"lowpass\", order=10, cutoff=4)","signal.lowpass(1000, 10, order=4)"], a:0,
+       why:"butter takes (order, cutoff frequency, filter type, sampling frequency) — order 4, cutoff 10 Hz, fs 1000 Hz in that positional order."},
+      {q:"Why use signal.filtfilt() instead of a one-pass filter?", o:["It applies the filter forward and backward, so the output has no phase distortion or time delay","It automatically chooses the best cutoff frequency","It removes noise perfectly, guaranteed","It increases the sampling rate of the signal"], a:0,
+       why:"filtfilt filters forward and backward, cancelling phase shifts — no time delay, no phase distortion."},
+      {q:"A raw accelerometer signal carries high-frequency noise. Match the problem to the right filter:", o:["Low-pass — attenuate high frequencies, keep the movement trend","High-pass — drift is the same thing as high-frequency noise","Band-stop — every sensor noise lives at one exact frequency","Moving average only — np.convolve is the only possible tool"], a:0,
+       why:"The deck's matching table: high-frequency noise → low-pass. (A moving average is also a kind of low-pass smoothing, but 'high-pass' is wrong.)"},
+      {q:"When is a filter judged successful?", o:["Only when the output is more useful for the intended analysis — noise reduced and important features preserved","Whenever the smoothed output looks perfectly flat","When the filter order used is the highest possible","When the original and filtered signals are identical"], a:0,
+       why:"Success is judged by noise reduction AND information preservation, relative to the analysis you intend to do."}
+    ]
+  },
+  "s6": {
+    num: "06", kind: "session", title: "Event &amp; Feature Detection",
+    blurb: "Finding when something important happens (events), describing it numerically (features), and building the bridge to machine learning.",
+    body: [
+      {t:"def", tag:"exam favorite", html:"<b>Event:</b> a specific occurrence in the signal relevant to the analysis — <i>when</i> did something happen? (heartbeat, footstep, speech onset) &nbsp; <b>Feature:</b> a measurable characteristic describing a signal or an event — <i>what</i> are its characteristics? (max amplitude, mean, peak count, duration)"},
+      {t:"pipe", html:"<b>Raw signal</b> <span class='arr'>→</span> <b>Detect event</b> <span class='arr'>→</span> <b>Extract features</b> <span class='arr'>→</span> <b>Represent event</b> <span class='arr'>→</span> <b>Interpret / classify</b>"},
+      {t:"h2", html:"Peaks, valleys and repeated events"},
+      {t:"text", html:"A <b>peak</b> is a local maximum; a <b>valley</b> a local minimum. They mark meaningful events: heartbeats, footsteps, vibration cycles. Detecting repeated events lets you analyze their <b>timing</b>: if events occur at t₁ and t₂, the interval is t₂ − t₁. Example: peaks at 2.0 s and 2.6 s → interval = <b>0.6 s</b>. Intervals describe <b>heart rate, step rate, machine cycle duration, periodicity</b>. An ECG's <b>R-peaks</b> are the classic example for separating individual heartbeats."},
+      {t:"h2", html:"Automatic detection"},
+      {t:"text", html:"A peak detector searches for local maxima and considers <b>peak height</b>, <b>prominence</b> and <b>minimum distance</b> between peaks. A threshold detector fires when the signal crosses a threshold (e.g. acceleration exceeds a limit). Threshold choice matters: <b>too low → false detections · too high → missed events</b>. Robust detectors combine conditions — e.g. a peak must be <b>amplitude ≥ X AND separated by ≥ distance</b> from the previous one, which prevents double-detecting one event."},
+      {t:"h2", html:"Segmentation"},
+      {t:"text", html:"Segmentation divides a continuous signal into smaller regions analyzed separately — individual heartbeats, footsteps, speech segments, machine cycles. Once an event is detected, an <b>event window</b> captures the signal before it, during it, and after it. This turns a long recording into manageable units you can compare, describe per-event, scan for anomalies, and turn into ML datasets."},
+      {t:"h2", html:"Feature families"},
+      {t:"table", head:["Family","Examples"], rows:[
+        ["<b>Amplitude</b>","maximum, minimum, peak-to-peak"],
+        ["<b>Statistical</b>","mean, standard deviation, variance"],
+        ["<b>Temporal</b>","event duration, time between peaks, rise/fall time, events per second"]]},
+      {t:"def", tag:"key number", html:"Peak-to-peak = maximum − minimum. If max = 1.21 and min = −0.83, peak-to-peak = <b>2.04</b>."},
+      {t:"h2", html:"The Python side"},
+      {t:"code", html:"<span class='kw'>from</span> scipy.signal <span class='kw'>import</span> find_peaks\n\npeaks, properties = find_peaks(signal,\n    height=<span class='fn'>1.0</span>,   <span class='cmt'># minimum peak height</span>\n    distance=<span class='fn'>50</span>  <span class='cmt'># minimum separation between peaks (samples)</span>\n)\n\n<span class='cmt'># features of one detected segment</span>\nmean  = np.mean(segment); std = np.std(segment)\nmx = np.max(segment);    mn = np.min(segment)\np2p = mx - mn"},
+      {t:"h2", html:"From features to analysis"},
+      {t:"text", html:"Extracted features support signal analysis (compare events), monitoring (spot abnormal behavior), classification and machine learning — e.g. accelerometer → mean + std + peak count → <b>feature vector</b> → activity classifier. Feature extraction is the bridge between signal processing and higher-level analysis."},
+      {t:"pipe", html:"<b>Accelerometer</b> <span class='arr'>→</span> <b>Filtering</b> <span class='arr'>→</span> <b>Peak detection</b> <span class='arr'>→</span> <b>Detected steps</b> <span class='arr'>→</span> <b>Step intervals / features</b>"}
+    ],
+    quiz:[
+      {q:"Which pairing states the event vs feature distinction correctly?", o:["Event = when something happens; feature = what characteristics describe it","Feature = when something happens; event = its average value","Event = the whole recording; feature = a single sample","They are synonyms"], a:0,
+       why:"Events answer “when did something happen?”, features answer “what characteristics describe it?” — the deck's explicit contrast."},
+      {q:"Two detected peaks occur at t₁ = 2.0 s and t₂ = 2.6 s. What is the interval, and why is it useful?", o:["0.6 s — event intervals describe heart rate, step rate or machine cycle duration","2.6 s — the interval is the later timestamp","0.6 Hz — the interval is a frequency","4.6 s — intervals are added to timestamps"], a:0,
+       why:"Interval = t₂ − t₁ = 0.6 s. Timing between repeated events quantifies periodicity and rates."},
+      {q:"In scipy's find_peaks(signal, height=1.0, distance=50), what do the parameters enforce?", o:["A peak must reach at least 1.0 and be at least 50 samples from the previous peak","The signal must be 50 samples long and 1.0 V high","Peaks are averaged over 50 samples with a height cutoff of 1.0 s","Height is in Hz and distance is in seconds"], a:0,
+       why:"height = minimum peak height; distance = minimum separation between peaks. Combining conditions prevents multiple detections of one event."},
+      {q:"A threshold detector repeatedly fires when only noise crosses the trigger. What went wrong, in the deck's terms?", o:["The threshold is too low, causing false detections","The threshold is too high, causing missed events","The threshold is perfectly tuned","Signals cannot cross thresholds"], a:0,
+       why:"Too low → false detections; too high → missed events. Detection criteria must match the signal's characteristics."},
+      {q:"A segment has maximum 1.21 and minimum −0.83. What is its peak-to-peak value?", o:["2.04","0.38","−1.00","1.21"], a:0,
+       why:"Peak-to-peak = max − min = 1.21 − (−0.83) = 2.04 — mind the double negative."}
+    ]
+  },
+  "sA": {
+    num: "A", kind: "bonus", title: "Sound &amp; Waveforms",
+    blurb: "Bonus condensed from the audio-DSP lecture PDFs: sound as a mechanical wave, and the three quantities a waveform carries.",
+    body: [
+      {t:"text", html:"Sound is produced by the <b>vibration of an object</b>. Those vibrations make air molecules oscillate, and the changing air pressure propagates as a <b>mechanical wave</b> — an oscillation that travels through space, transferring energy while the medium is deformed."},
+      {t:"def", tag:"definition", html:"A <b>waveform</b> carries multifactorial information: <b>frequency</b>, <b>intensity</b> and <b>timbre</b>. It can be periodic (repeats) or aperiodic (no periodic pattern)."},
+      {t:"h2", html:"Frequency, amplitude, phase"},
+      {t:"table", head:["Quantity","What it is","Perceptual effect"], rows:[
+        ["<b>Frequency</b>","Repetitions per second; period T = 1/f","Higher frequency → higher sound (pitch)"],
+        ["<b>Amplitude</b>","Magnitude of the pressure change","Larger amplitude → louder"],
+        ["<b>Phase</b>","Position in the cycle","Relative phase shapes interference"]]},
+      {t:"text", html:"Quick check: a tone of <b>f = 440 Hz</b> has a period <b>T = 1/440 s ≈ 2.27 ms</b>."},
+      {t:"h2", html:"Pitch is logarithmic"},
+      {t:"def", tag:"exam favorite", html:"<b>Pitch perception is logarithmic</b>: two frequencies are perceived as similar if they differ by a <b>power of 2</b>. Doubling the frequency = one <b>octave</b>: 440 Hz → 880 Hz is the octave above A4. MIDI note numbering follows this: an octave = 12 MIDI steps."},
+      {t:"h2", html:"Cents"},
+      {t:"text", html:"An <b>octave is divided into 1200 cents</b>; a <b>semitone is 100 cents</b>. Just-noticeable pitch differences run about <b>10–25 cents</b>. So pitch and frequency live on different maps: Hz is linear, pitch is log."},
+      {t:"h2", html:"Tie-in to your course"},
+      {t:"text", html:"This is the sensory origin of the DSP material: the frequency a FFT or spectrogram reports (Session 04–05 material) maps to perceived pitch only logarithmically — which is exactly why the <b>Mel spectrogram</b> exists in audio ML."}
+    ],
+    quiz:[
+      {q:"What physically produces a sound wave?", o:["Vibrations of an object that make air molecules oscillate and change air pressure","Radio signals traveling through a vacuum","Light reflecting off a surface between two rooms","Electrons moving through wires only"], a:0,
+       why:"Sound = vibration → molecular oscillation → pressure wave, a mechanical wave that transfers energy through a medium."},
+      {q:"A waveform is described in the lecture as carrying which information?", o:["Frequency, intensity, and timbre","Only duration and sample rate","Phase alone","Bits and bytes"], a:0,
+       why:"The three multifactorial elements of a waveform are frequency, intensity and timbre."},
+      {q:"The period of a 440 Hz tone is closest to…", o:["2.27 ms","22.7 ms","440 ms","0.44 s"], a:0,
+       why:"T = 1/f = 1/440 s ≈ 0.00227 s ≈ 2.27 ms."},
+      {q:"Two frequencies are heard as being in the same musical pitch class — an octave apart — when…", o:["One is double the other (a power of 2)","One is 100 cents higher than the other","They differ by a constant number of Hertz","They have the same amplitude"], a:0,
+       why:"Pitch perception is logarithmic: doubling is an octave (440 → 880 Hz). A constant Hz difference shrinks perceptually as frequency rises."},
+      {q:"How is the octave divided in cents, and what is a just-noticeable pitch difference?", o:["1200 cents per octave; noticeable differences are about 10–25 cents","12 cents per octave; noticeable differences are 50 cents","100 cents per octave; nothing below 1 envelope is audible","1200 cents per octave; no difference is audible"], a:0,
+       why:"The octave divides into 1200 cents (100 per semitone), and listeners reliably notice shifts of about 10–25 cents."}
+    ]
+  },
+  "sB": {
+    num: "B", kind: "bonus", title: "Intensity, Loudness &amp; Timbre",
+    blurb: "Bonus condensed from the audio-DSP lecture PDFs: decibels, the difference between intensity and loudness, and what makes a violin sound different from a flute.",
+    body: [
+      {t:"h2", html:"Power and intensity"},
+      {t:"def", tag:"definition", html:"<b>Sound power:</b> the rate at which energy is transferred — energy per unit time emitted by a source in all directions, in <b>watts (W)</b>. <b>Sound intensity:</b> sound power <b>per unit area</b>, in <b>W/m²</b>."},
+      {t:"text", html:"Humans hear an enormous range: from the <b>threshold of hearing</b> (tiny intensities) to the <b>threshold of pain</b> — and linear watts compress badly on a chart. Hence the logarithm."},
+      {t:"h2", html:"Decibels"},
+      {t:"def", tag:"know this", html:"<b>Intensity level</b> is a <b>logarithmic scale in decibels (dB)</b>: a <i>ratio</i> between two intensities, referenced to the threshold of hearing. <b>Every ~3 dB, intensity doubles.</b> A level of 0 dB corresponds to the reference itself (log(1) = 0)."},
+      {t:"h2", html:"Loudness — the subjective side"},
+      {t:"text", html:"<b>Loudness</b> is the <b>subjective perception</b> of sound intensity, measured in <b>phons</b>. It depends not only on intensity but also on a sound's <b>duration</b>, its <b>frequency</b>, and the listener's <b>age</b>. <b>Equal-loudness contours</b> plot combinations of frequency and intensity that sound equally loud — hearing is least sensitive at low and very high frequencies."},
+      {t:"h2", html:"Timbre — the colour of sound"},
+      {t:"def", tag:"exam favorite", html:"<b>Timbre</b> is the quality that distinguishes two sounds with the <b>same intensity, frequency and duration</b> — words like bright, dark, dull, harsh, warm. It is <b>multidimensional</b>: the <b>amplitude envelope</b>, the <b>harmonic content</b>, and <b>modulation</b> (frequency or amplitude)."},
+      {t:"text", html:"<b>Envelope</b> follows the <b>ADSR model</b>: attack, decay, sustain, release — the shape of the sound's amplitude over time."},
+      {t:"h2", html:"Harmonics and modulation"},
+      {t:"list", items:["A <b>complex sound</b> is a superposition of sinusoids; each sinusoid is a <b>partial</b>","The lowest partial is the <b>fundamental frequency</b>","A <b>harmonic partial</b> is at a multiple of the fundamental; <b>inharmonicity</b> measures deviation from exact multiples","<b>Frequency modulation</b> = vibrato; <b>amplitude modulation</b> = tremolo — in music used for expression"]},
+      {t:"text", html:"Harmonic instruments (strings, brass, most wind) stack near-multiples of a fundamental; inharmonic ones (drums, bells, cymbals) don't — one reason metallic sounds sound metallic."}
+    ],
+    quiz:[
+      {q:"Sound intensity differs from sound power how?", o:["Intensity is sound power per unit area (W/m²); power is energy per unit time (W)","They are both measured in watts and are interchangeable","Intensity is subjective; power is subjective too","Intensity is measured in phons"], a:0,
+       why:"Power = energy transfer rate (W). Intensity = power per unit area (W/m²). Loudness — not intensity — is the subjective one in phons."},
+      {q:"On the dB intensity-level scale, what does an increase of about 3 dB mean?", o:["Intensity roughly doubles","Intensities roughly halves","Frequency doubles","Pitch rises one octave"], a:0,
+       why:"dB is logarithmic: each +3 dB ≈ ×2 intensity. It is a ratio referenced to the threshold of hearing; 0 dB = the reference."},
+      {q:"Loudness differs from intensity because loudness…", o:["Is subjective and depends on duration, frequency and listener age; it is measured in phons","Is measured in W/m² like intensity","Is the frequency-domain version of intensity","Is independent of frequency"], a:0,
+       why:"Loudness is perception (phons) and varies with duration, frequency and age — equal-loudness contours capture exactly that dependence."},
+      {q:"A violin and a flute play the same note at the same loudness for the same duration, yet sound unmistakably different. What explains this?", o:["Timbre — their amplitude envelope, harmonic content and modulation differ","They must differ in frequency, so something is wrong with the experiment","Intensity differs, contradicting the setup","Phase alone fully determines the difference"], a:0,
+       why:"Timbre is whatever differs when intensity, frequency and duration are matched — envelope (ADSR), distribution of energy across partials, and vibrato/tremolo."},
+      {q:"A performer adds a slow, periodic wobble in pitch for expressive effect. What is it called?", o:["Frequency modulation — vibrato","Amplitude modulation — tremolo","Envelope shifting — sustain","Inharmonicity decay"], a:0,
+       why:"Vibrato = periodic frequency variation; tremolo is the amplitude counterpart. Harmonic content is the distribution across partials."}
+    ]
+  },
+  "sC": {
+    num: "C", kind: "bonus", title: "Audio Signals, ADC &amp; Quantization",
+    blurb: "Bonus condensed from the audio-DSP lecture PDFs: the audio signal, sampling and Nyquist, aliasing, bit depth, dynamic range — and the famous 86 kilobytes.",
+    body: [
+      {t:"def", tag:"definition", html:"An <b>audio signal</b> is a <b>representation of sound</b> that encodes everything needed to reproduce it. <b>Analog:</b> continuous in time and amplitude. <b>Digital:</b> a sequence of discrete values, each drawn from a finite set."},
+      {t:"pipe", html:"<b>Sound wave</b> <span class='arr'>→</span> <b>ADC (audio to digital)</b> <span class='arr'>→</span> <b>Digital audio</b> <span class='arr'>→</span> <b>processing / ML</b> <span class='arr'>→</span> <b>DAC (digital to audio)</b> <span class='arr'>→</span> <b>Sound out</b>"},
+      {t:"h2", html:"Sampling: rate, period, Nyquist"},
+      {t:"text", html:"<b>Sampling</b> measures the analog signal every <b>sampling period T</b>; the <b>sampling rate f<sub>s</sub> = 1/T</b>. The <b>Nyquist frequency = f<sub>s</sub>/2</b> is the highest frequency digital audio can represent faithfully."},
+      {t:"def", tag:"exam favorite", html:"<b>Why CD audio uses 44100 Hz</b>: the Nyquist frequency is then <b>44100/2 = 22050 Hz</b>, above the ~20 kHz limit of human hearing. Sample slower and audible frequencies alias away; sample faster and you store inaudible data."},
+      {t:"h2", html:"Aliasing"},
+      {t:"text", html:"If content above the Nyquist frequency is sampled, it doesn't disappear — it <b>aliases</b>: it masquerades as a lower, phantom frequency. Practical fixes: record at a rate above twice your highest frequency of interest, and low-pass (anti-alias) filter before sampling."},
+      {t:"h2", html:"Quantization: bit depth"},
+      {t:"text", html:"<b>Quantization</b> rounds each sample's amplitude to a finite level. <b>Resolution = bit depth</b>: n bits give 2ⁿ levels. <b>CD resolution = 16 bits → 65,536 levels.</b> More bit depth means smaller quantization error."},
+      {t:"def", tag:"key numbers", html:"<b>Dynamic range:</b> the difference between the largest and smallest signal a system can record — it correlates with bit depth. <b>SQNR (signal-to-quantization-noise ratio):</b> relationship between maximum signal strength and quantization error; correlates with dynamic range."},
+      {t:"h2", html:"The memory calculation — know this one"},
+      {t:"def", tag:"work it by hand", html:"1 second of CD-quality mono sound: <br><b>44100 samples/s × 16 bits/sample = 705,600 bits = 88,200 bytes ≈ 86 kB.</b> Stereo doubles it; one minute of stereo ≈ 10 MB."},
+      {t:"h2", html:"Why this matters beyond audio"},
+      {t:"text", html:"ADC and DAC are the general pipeline from the living world to your NumPy arrays: mic → ADC → samples → features → model. Any sensor workflow (Session 02) obeys the same two decisions: <b>when</b> to measure (rate vs Nyquist) and <b>how finely</b> to measure values (bit depth vs dynamic range)."}
+    ],
+    quiz:[
+      {q:"The CD sampling rate is 44100 Hz. What is the reasoning, straight from the lecture?", o:["44100 Hz gives a Nyquist frequency of 22050 Hz, above the ~20 kHz limit of human hearing","44100 was chosen because it equals exactly twice the lowest piano note","44100 Hz is the sampling rate needed to represent amplitudes of 16 bits","It is easy to double 44100 for stereo playback"], a:0,
+       why:"Nyquist = fs/2 = 22050 Hz > 20 kHz, so every audible frequency is representable. Bit depth is a separate decision entirely."},
+      {q:"Content above the Nyquist frequency is present in a signal that gets sampled. What happens to it?", o:["It aliases — it masquerades as a lower, phantom frequency","It is quantized to the nearest bit","It doubles the volume of the recording","It is silently stored in stereo"], a:0,
+       why:"Undersampled high frequencies alias into lower ones. Fix: higher fs and/or an anti-alias low-pass filter before sampling."},
+      {q:"CD quantization resolution is 16 bits. How many distinct amplitude levels does that give?", o:["65,536","16,000","64,000","128"], a:0,
+       why:"Resolution = number of bits = 2ⁿ levels: 2¹⁶ = 65,536. Bit depth also sets dynamic range and SQNR."},
+      {q:"How much memory does 1 second of mono CD-quality audio use (fs = 44100 Hz, 16-bit)?", o:["88,200 bytes ≈ 86 kB","44100 bytes ≈ 43 kB","705,600 bytes ≈ 886 kB","16 bytes"], a:0,
+       why:"44100 samples/s × 16 bits = 705,600 bits/s = 705,600/8 = 88,200 bytes ≈ 86 kB. Stereo doubles it."},
+      {q:"Signal-to-quantization-noise ratio (SQNR) relates what to what?", o:["Maximum signal strength to quantization error — and correlates with dynamic range","Sample rate to bit depth","Loudness in phons to intensity in W/m²","Heart rate to step rate"], a:0,
+       why:"SQNR compares the maximum signal with the error introduced by rounding amplitudes to levels; deeper bit depth → both SQNR and dynamic range improve."}
+    ]
+  }
+};
+
+const ORDER = ["s1","s2","s3","s4","s5","s6","sA","sB","sC"];
+const CORE = ORDER.slice(0, 6);
+const BONUS = ORDER.slice(6);
+
+/* ---------- progress state ---------- */
+const KEY = "signals6-progress";
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { state = {}; }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+function doneLessons(){
+  return ORDER.filter(s => state.quiz && state.quiz[s]).length;
+}
+function progressPct(){
+  const total = ORDER.length + 1;
+  return Math.round((doneLessons() + (state.exam ? 1 : 0)) / total * 100);
+}
+function paintProgress(){
+  const pct = progressPct();
+  const fill = document.getElementById("progress-fill");
+  if (fill) fill.style.width = pct + "%";
+  document.getElementById("progress-label").textContent = pct + "%";
+}
+
+/* ---------- router ---------- */
+function go(view, lessonId){
+  document.querySelectorAll("main > section").forEach(s => s.classList.remove("on"));
+  document.getElementById("view-" + view).classList.add("on");
+  window.scrollTo(0, 0);
+  if (view === "home"){ renderHome(); }
+  if (view === "lesson"){ renderLesson(lessonId); }
+}
+function labelOf(id){
+  const l = D[id];
+  return l.kind === "bonus" ? "Bonus " + l.num : "Session " + l.num;
+}
+function startLesson(id){ go("lesson", id); }
+
+/* ---------- home ---------- */
+function renderHome(){
+  const el = document.getElementById("lesson-list");
+  el.innerHTML = "";
+  function addGroup(label, ids){
+    const lab = document.createElement("div");
+    lab.className = "group-label";
+    lab.textContent = label;
+    el.appendChild(lab);
+    ids.forEach(id => {
+      const l = D[id];
+      const rec = state.quiz && state.quiz[id];
+      const chip = rec
+        ? `<span class="score-chip ${rec.best / rec.of === 1 ? "done" : ""}">best ${rec.best}/${rec.of}</span>`
+        : (state.visited && state.visited[id] ? `<span class="score-chip">read, not tested</span>` : "");
+      const row = document.createElement("div");
+      row.className = "lesson-row";
+      row.innerHTML = `
+        <span class="num">${labelOf(id)}</span>
+        <div class="lt"><h2>${l.title}</h2><p>${l.blurb}</p></div>
+        ${chip}
+        <button class="rowbtn" type="button">${rec ? "Review" : "Start"}</button>`;
+      row.querySelector(".rowbtn").onclick = () => startLesson(id);
+      el.appendChild(row);
+    });
+  }
+  addGroup("Core sessions — from your course decks", CORE);
+  addGroup("Bonus — from the audio-DSP lecture PDFs", BONUS);
+  const er = document.getElementById("exam-res");
+  er.textContent = state.exam ? `best ${state.exam.best}/${state.exam.of}` : "not attempted";
+  paintProgress();
+}
+document.getElementById("reset").onclick = () => {
+  if (confirm("Reset all saved scores and reading progress?")){
+    state = {}; save(); renderHome();
+  }
+};
+
+/* ---------- lesson rendering ---------- */
+function renderLesson(id){
+  const l = D[id];
+  document.getElementById("lesson-num").textContent = labelOf(id);
+  document.getElementById("lesson-title").innerHTML = l.title;
+  document.getElementById("lesson-blurb").innerHTML = l.blurb;
+  state.visited = state.visited || {}; state.visited[id] = true; save();
+
+  const body = document.getElementById("lesson-body");
+  body.innerHTML = "";
+  l.body.forEach(b => {
+    if (b.t === "h2"){ const h = document.createElement("h2"); h.innerHTML = b.html; body.appendChild(h); }
+    else if (b.t === "text"){ const p = document.createElement("p"); p.innerHTML = b.html; body.appendChild(p); }
+    else if (b.t === "def"){ const d = document.createElement("div"); d.className = "def"; d.innerHTML = `<span class="tag">${b.tag}</span>${b.html}`; body.appendChild(d); }
+    else if (b.t === "pipe"){ const p = document.createElement("div"); p.className = "pipe"; p.innerHTML = b.html; body.appendChild(p); }
+    else if (b.t === "list"){
+      const ul = document.createElement("ul"); ul.className = "tight";
+      b.items.forEach(i => { const li = document.createElement("li"); li.innerHTML = i; ul.appendChild(li); });
+      body.appendChild(ul);
+    }
+    else if (b.t === "table"){
+      const tb = document.createElement("table");
+      tb.innerHTML = "<tr>" + b.head.map(c => `<th>${c}</th>`).join("") + "</tr>" +
+        b.rows.map(r => "<tr>" + r.map(c => `<td>${c}</td>`).join("") + "</tr>").join("");
+      body.appendChild(tb);
+    }
+    else if (b.t === "code"){
+      const pre = document.createElement("pre");
+      pre.innerHTML = "<code>" + b.html + "</code>"; body.appendChild(pre);
+    }
+  });
+
+  buildQuiz(body, D[id].quiz, "L" + id, (got, quiz) => finishLessonQuiz(id, got, quiz, body));
+
+  const idx = ORDER.indexOf(id);
+  const prev = document.getElementById("prev-btn"), next = document.getElementById("next-btn");
+  prev.textContent = idx > 0 ? "← " + labelOf(ORDER[idx-1]) : "Back to list";
+  prev.onclick = idx > 0 ? () => startLesson(ORDER[idx-1]) : () => go("home");
+  next.textContent = idx < ORDER.length - 1 ? labelOf(ORDER[idx+1]) + " →" : "All done → final check";
+  next.onclick = idx < ORDER.length - 1 ? () => startLesson(ORDER[idx+1]) : () => startExam();
+  paintProgress();
+}
+
+function finishLessonQuiz(id, got, quiz, container){
+  const of = quiz.length;
+  state.quiz = state.quiz || {};
+  const rec = state.quiz[id] || {best: 0, of};
+  rec.best = Math.max(rec.best, got); rec.of = of;
+  state.quiz[id] = rec; save(); paintProgress();
+
+  const fin = document.createElement("div");
+  fin.className = "quiz-finish";
+  const idx = ORDER.indexOf(id);
+  fin.innerHTML = `
+    <div class="big">${got} / ${of}</div>
+    <p>${got === of ? "Perfect — this lesson is exam-ready." : "Missed something? The explanations above cover it — review any time."}</p>
+    ${idx >= 0 && idx < ORDER.length - 1
+      ? `<button class="nextbtn" type="button">Continue → ${labelOf(ORDER[idx+1])}</button>`
+      : `<button class="nextbtn" type="button">All lessons done — take the final check</button>`}`;
+  const b = fin.querySelector(".nextbtn");
+  b.onclick = () => {
+    if (idx >= 0 && idx < ORDER.length - 1) startLesson(ORDER[idx+1]);
+    else startExam();
+  };
+  container.appendChild(fin);
+}
+
+/* ---------- quiz builder ---------- */
+function buildQuiz(container, quiz, id, onAllAnswered){
+  const wrap = document.createElement("div");
+  wrap.className = "quiz";
+  wrap.innerHTML = `<h2>Check yourself — ${quiz.length} questions</h2>`;
+  let got = 0, answered = 0;
+  quiz.forEach((q, qi) => {
+    // shuffle option order so the correct answer is not always the same letter
+    const perm = q.o.map((_, i) => i).sort(() => Math.random() - 0.5);
+    const q2 = {q: q.q, why: q.why, o: perm.map(i => q.o[i]), a: perm.indexOf(q.a)};
+    const card = document.createElement("div");
+    card.className = "qcard";
+    const tag = document.createElement("div");
+    tag.className = "qtag"; tag.textContent = "Q" + (qi + 1);
+    const qq = document.createElement("div");
+    qq.className = "qq"; qq.innerHTML = q2.q;
+    const fs = document.createElement("fieldset");
+    fs.appendChild(tag); fs.appendChild(qq);
+    const buttons = q2.o.map((text, oi) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "opt";
+      btn.innerHTML = `<span class="letter">${"abcd"[oi].toUpperCase()}.</span><span>${text}</span>`;
+      btn.onclick = () => {
+        if (card.dataset.done) return;
+        card.dataset.done = "1";
+        const correct = oi === q2.a;
+        btn.classList.add(correct ? "correct" : "wrong");
+        if (!correct) buttons[q2.a].classList.add("correct");
+        buttons.forEach(b => b.disabled = true);
+        const why = document.createElement("div");
+        why.className = "why " + (correct ? "ok" : "no");
+        why.innerHTML = (correct ? "Correct — " : "Not quite — ") + q.why;
+        card.appendChild(why);
+        if (correct) got++;
+        answered++;
+        if (answered === quiz.length && onAllAnswered) onAllAnswered(got, quiz);
+      };
+      fs.appendChild(btn);
+      return btn;
+    });
+    card.appendChild(fs);
+    wrap.appendChild(card);
+  });
+  container.appendChild(wrap);
+}
+
+/* ---------- final exam ---------- */
+let examQuiz = null;
+function startExam(){
+  const pool = [];
+  ORDER.forEach(s => D[s].quiz.forEach(q => pool.push({...q})));
+  examQuiz = pool.sort(() => Math.random() - 0.5).slice(0, 10);
+  const cont = document.getElementById("exam-questions");
+  cont.innerHTML = "";
+  document.getElementById("exam-outcome").innerHTML = "";
+  document.getElementById("exam-submit").style.display = "";
+  cont.innerHTML = `<div class="small" style="margin:18px 0">Topics in this run: ${[...new Set(examQuiz.map(q => ""))].length === 0 ? "" : ""}</div>`;
+  buildQuiz(cont, examQuiz, "EXAM", (got, quiz) => {
+    state.examReady = got; save();
+  });
+  go("exam");
+}
+function gradeExam(){
+  if (!examQuiz) return;
+  const got = state.examReady || 0, of = examQuiz.length;
+  document.getElementById("exam-submit").style.display = "none";
+  state.exam = state.exam || {best: 0, of: 0};
+  state.exam.best = Math.max(state.exam.best, got); state.exam.of = of; save();
+  const pct = Math.round(got / of * 100);
+  const pass = pct >= 70;
+  document.getElementById("exam-outcome").innerHTML = `
+    <div class="exam-result">
+      <div class="big ${pass ? "verdict-ok" : "verdict-no"}">${got} / ${of} — ${pct}%</div>
+      <p>${pass ? "Pass mark (70%) cleared. Focus your remaining revision on the topics behind your misses." : "Below the 70% pass mark — recheck the lessons behind your misses and try again."}</p>
+      ${got < of ? "<p class='small'>Correct answers are now marked green on the questions above.</p>" : ""}
+    </div>`;
+  paintProgress();
+}
+
+/* ---------- oscilloscope hero: noisy sine + moving average ---------- */
+(function(){
+  const cv = document.getElementById("trace");
+  if (!cv) return;
+  const ctx = cv.getContext("2d");
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let W = 15, t0 = 0;
+  document.querySelectorAll(".winbtn").forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll(".winbtn").forEach(x => x.setAttribute("aria-pressed", "false"));
+      b.setAttribute("aria-pressed", "true");
+      W = +b.dataset.w;
+    };
+  });
+  function noise(t){
+    return Math.sin(t*13.7)*0.18 + Math.sin(t*31.3 + 2)*0.12 + (Math.sin(t*154.2) + Math.sin(t*273.5))*0.05;
+  }
+  function draw(){
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const w = cv.clientWidth * dpr, h = 172 * dpr;
+    cv.width = w; cv.height = h;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(30,58,95,.10)"; ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 56){ ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+    for (let y = 0; y < h; y += 56){ ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+    const N = 420, raw = [];
+    for (let i = 0; i < N; i++){
+      const ph = i / N * Math.PI * 4 + t0;
+      raw.push(Math.sin(ph) * 0.62 + noise(ph * 3));
+    }
+    const sm = [];
+    for (let i = 0; i < N; i++){
+      let s = 0, c = 0;
+      for (let j = Math.max(0, i - W); j <= i; j++){ s += raw[j]; c++; }
+      sm.push(s / c);
+    }
+    const mid = h / 2, amp = h * 0.34;
+    function path(arr, color, lw){
+      ctx.beginPath();
+      for (let i = 0; i < N; i++){
+        const x = i / (N - 1) * (w - 30) + 10, y = mid - arr[i] * amp;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.stroke();
+    }
+    path(raw, "rgba(30,58,95,.30)", 1.4);
+    path(sm, "#E8830C", 2.6);
+  }
+  if (reduceMotion){ requestAnimationFrame(() => draw()); }
+  else {
+    (function loop(){ t0 += 0.02; draw(); requestAnimationFrame(loop); })();
+  }
+  addEventListener("resize", draw);
+})();
+
+renderHome();
+</script>
+</body>
+</html>
