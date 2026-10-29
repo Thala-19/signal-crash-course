@@ -86,6 +86,26 @@
     .demo-read{margin-left:0;text-align:left;flex-basis:100%}
   }
 
+  /* ---------- formula cards ---------- */
+  .fx{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:16px 0;padding:14px 18px 16px}
+  .fx .fx-tag{display:block;font-family:"IBM Plex Mono";font-size:12px;color:var(--amber);margin-bottom:6px}
+  .fx .eq{font-family:"Space Grotesk";font-size:24px;text-align:center;margin:4px 0 10px;letter-spacing:.01em}
+  .fx .eq sub,.fx .eq sup{font-size:.62em}
+  .fx .frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;margin:0 5px;line-height:1.15}
+  .fx .frac b{border-bottom:2px solid var(--ink);padding:0 6px 1px;font-weight:600}
+  .fx .frac i{font-style:normal;padding-top:2px;font-family:"IBM Plex Mono";font-size:.75em}
+  .fx .sum{display:inline-flex;flex-direction:column;align-items:center;margin:0 7px;vertical-align:middle;line-height:1.05}
+  .fx .sum .lim{font-size:.5em;color:var(--muted);font-family:"IBM Plex Mono"}
+  .fx .sum .op{font-size:1.4em}
+  .fx .vars{font-size:13.5px;color:var(--muted);margin:2px 0 0}
+  .fx .fx-controls{display:flex;align-items:center;gap:14px;border-top:1px solid var(--line);margin-top:12px;padding-top:10px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+  .fx .fx-controls label{display:flex;align-items:center;gap:7px;font-family:"IBM Plex Mono";white-space:nowrap}
+  .fx .fx-controls input[type=range]{width:130px;accent-color:var(--amber-bright)}
+  .fx .fx-out{font-family:"IBM Plex Mono";margin-left:auto;color:var(--navy);text-align:right;max-width:48ch}
+  @media (max-width:640px){
+    .fx .fx-out{margin-left:0;text-align:left;flex-basis:100%}
+  }
+
   .lessons{margin-top:34px}
   .group-label{
     font-family:"Space Grotesk";font-size:14px;font-weight:600;color:var(--muted);
@@ -343,6 +363,7 @@ const D = {
       {t:"h2", html:"Sampling rate"},
       {t:"text", html:"The sampling rate decides how often the signal is measured. Low rate: less data, but may miss important changes. High rate: captures fast changes, at the cost of more data. Match the rate to the phenomenon: <b>temperature changes slowly, human movement moderately, speech faster, machine vibration rapidly.</b>"},
       {t:"def", tag:"key number", html:"If fs = 1000 Hz, the system takes 1000 samples per second, so consecutive samples are separated by <b>1 ms</b>."},
+      {t:"fx", id:"s2rate"},
       {t:"demo", id:"samplerate"},
       {t:"h2", html:"In software"},
       {t:"text", html:"Once acquired, the signal is a numerical array. Each value is the measurement at one sampling instant; with fs known, you can reconstruct the time axis exactly."},
@@ -370,6 +391,7 @@ const D = {
       {t:"list", items:["<b>Amplitude</b> — the magnitude of the signal","<b>Trend</b> — the overall direction of change","<b>Peaks and valleys</b> — extreme values","<b>Oscillations</b> — repeated changes","<b>Events</b> — sudden changes or unusual behavior","<b>Noise</b> — unwanted fluctuations"]},
       {t:"h2", html:"A basic plot in Python"},
       {t:"code", html:"t = np.linspace(<span class='fn'>0</span>, <span class='fn'>2</span>, <span class='fn'>1000</span>)          <span class='cmt'># time axis</span>\nfrequency = <span class='fn'>2</span>  <span class='cmt'># Hz</span>\nsignal = np.sin(<span class='fn'>2</span>*np.pi*frequency*t)\n\nplt.figure(figsize=(<span class='fn'>10</span>, <span class='fn'>4</span>))\nplt.plot(t, signal, linewidth=<span class='fn'>2</span>)\nplt.xlabel(<span class='str'>\"Time (s)\"</span>); plt.ylabel(<span class='str'>\"Amplitude\"</span>)\nplt.title(<span class='str'>\"Sinusoidal Signal\"</span>, fontweight=<span class='str'>\"bold\"</span>)\nplt.grid(alpha=<span class='fn'>0.25</span>); plt.axhline(<span class='fn'>0</span>, linewidth=<span class='fn'>0.8</span>)\nplt.tight_layout(); plt.show()"},
+      {t:"fx", id:"s3sin"},
       {t:"h2", html:"Axes carry the meaning"},
       {t:"text", html:"A meaningful plot identifies both axes: X can be time (s), sample number, or frequency (Hz); Y can be amplitude (V), acceleration (m/s²), temperature (°C). <b>A graph without meaningful labels is difficult to interpret.</b> A plot should answer a question about the signal — don't plot data just because you can."},
       {t:"h2", html:"Multiple signals: overlay vs subplots"},
@@ -411,6 +433,7 @@ const D = {
       {t:"h2", html:"Moving average"},
       {t:"def", tag:"know by heart", html:"A moving average <b>replaces each sample with the average of the N neighboring samples</b> — a small window keeps detail with less smoothing; a large window smooths more but can remove important rapid changes. <b>More smoothing is not always better.</b>"},
       {t:"code", html:"window = <span class='fn'>10</span>\nkernel = np.ones(window) / window      <span class='cmt'># averaging weights</span>\nfiltered = np.convolve(signal, kernel, mode=<span class='str'>\"same\"</span>)\n\n<span class='cmt'># evaluate: compare original vs filtered</span>\nplt.plot(signal, label=<span class='str'>\"Original\"</span>)\nplt.plot(filtered, label=<span class='str'>\"Filtered\"</span>)\nplt.legend(); plt.show()"},
+      {t:"fx", id:"s4avg"},
       {t:"demo", id:"movingavg"},
       {t:"h2", html:"The trade-off"},
       {t:"def", tag:"the line to remember", html:"Too little filtering → noise remains. Too much → important features are lost. <b>The goal is not the smoothest signal. The goal is the most useful signal.</b>"}
@@ -472,6 +495,7 @@ const D = {
       {t:"pipe", html:"<b>Raw signal</b> <span class='arr'>→</span> <b>Detect event</b> <span class='arr'>→</span> <b>Extract features</b> <span class='arr'>→</span> <b>Represent event</b> <span class='arr'>→</span> <b>Interpret / classify</b>"},
       {t:"h2", html:"Peaks, valleys and repeated events"},
       {t:"text", html:"A <b>peak</b> is a local maximum; a <b>valley</b> a local minimum. They mark meaningful events: heartbeats, footsteps, vibration cycles. Detecting repeated events lets you analyze their <b>timing</b>: if events occur at t₁ and t₂, the interval is t₂ − t₁. Example: peaks at 2.0 s and 2.6 s → interval = <b>0.6 s</b>. Intervals describe <b>heart rate, step rate, machine cycle duration, periodicity</b>. An ECG's <b>R-peaks</b> are the classic example for separating individual heartbeats."},
+      {t:"fx", id:"s6interval"},
       {t:"h2", html:"Automatic detection"},
       {t:"text", html:"A peak detector searches for local maxima and considers <b>peak height</b>, <b>prominence</b> and <b>minimum distance</b> between peaks. A threshold detector fires when the signal crosses a threshold (e.g. acceleration exceeds a limit). Threshold choice matters: <b>too low → false detections · too high → missed events</b>. Robust detectors combine conditions — e.g. a peak must be <b>amplitude ≥ X AND separated by ≥ distance</b> from the previous one, which prevents double-detecting one event."},
       {t:"demo", id:"peaks"},
@@ -483,6 +507,7 @@ const D = {
         ["<b>Statistical</b>","mean, standard deviation, variance"],
         ["<b>Temporal</b>","event duration, time between peaks, rise/fall time, events per second"]]},
       {t:"def", tag:"key number", html:"Peak-to-peak = maximum − minimum. If max = 1.21 and min = −0.83, peak-to-peak = <b>2.04</b>."},
+      {t:"fx", id:"s6p2p"},
       {t:"h2", html:"The Python side"},
       {t:"code", html:"<span class='kw'>from</span> scipy.signal <span class='kw'>import</span> find_peaks\n\npeaks, properties = find_peaks(signal,\n    height=<span class='fn'>1.0</span>,   <span class='cmt'># minimum peak height</span>\n    distance=<span class='fn'>50</span>  <span class='cmt'># minimum separation between peaks (samples)</span>\n)\n\n<span class='cmt'># features of one detected segment</span>\nmean  = np.mean(segment); std = np.std(segment)\nmx = np.max(segment);    mn = np.min(segment)\np2p = mx - mn"},
       {t:"h2", html:"From features to analysis"},
@@ -514,11 +539,13 @@ const D = {
         ["<b>Amplitude</b>","Magnitude of the pressure change","Larger amplitude → louder"],
         ["<b>Phase</b>","Position in the cycle","Relative phase shapes interference"]]},
       {t:"text", html:"Quick check: a tone of <b>f = 440 Hz</b> has a period <b>T = 1/440 s ≈ 2.27 ms</b>."},
+      {t:"fx", id:"sAperiod"},
       {t:"demo", id:"wave"},
       {t:"h2", html:"Pitch is logarithmic"},
       {t:"def", tag:"exam favorite", html:"<b>Pitch perception is logarithmic</b>: two frequencies are perceived as similar if they differ by a <b>power of 2</b>. Doubling the frequency = one <b>octave</b>: 440 Hz → 880 Hz is the octave above A4. MIDI note numbering follows this: an octave = 12 MIDI steps."},
       {t:"h2", html:"Cents"},
       {t:"text", html:"An <b>octave is divided into 1200 cents</b>; a <b>semitone is 100 cents</b>. Just-noticeable pitch differences run about <b>10–25 cents</b>. So pitch and frequency live on different maps: Hz is linear, pitch is log."},
+      {t:"fx", id:"sAoct"},
       {t:"h2", html:"Tie-in to your course"},
       {t:"text", html:"This is the sensory origin of the DSP material: the frequency a FFT or spectrogram reports (Session 04–05 material) maps to perceived pitch only logarithmically — which is exactly why the <b>Mel spectrogram</b> exists in audio ML."}
     ],
@@ -544,6 +571,7 @@ const D = {
       {t:"text", html:"Humans hear an enormous range: from the <b>threshold of hearing</b> (tiny intensities) to the <b>threshold of pain</b> — and linear watts compress badly on a chart. Hence the logarithm."},
       {t:"h2", html:"Decibels"},
       {t:"def", tag:"know this", html:"<b>Intensity level</b> is a <b>logarithmic scale in decibels (dB)</b>: a <i>ratio</i> between two intensities, referenced to the threshold of hearing. <b>Every ~3 dB, intensity doubles.</b> A level of 0 dB corresponds to the reference itself (log(1) = 0)."},
+      {t:"fx", id:"sBdb"},
       {t:"h2", html:"Loudness — the subjective side"},
       {t:"text", html:"<b>Loudness</b> is the <b>subjective perception</b> of sound intensity, measured in <b>phons</b>. It depends not only on intensity but also on a sound's <b>duration</b>, its <b>frequency</b>, and the listener's <b>age</b>. <b>Equal-loudness contours</b> plot combinations of frequency and intensity that sound equally loud — hearing is least sensitive at low and very high frequencies."},
       {t:"h2", html:"Timbre — the colour of sound"},
@@ -576,6 +604,7 @@ const D = {
       {t:"h2", html:"Sampling: rate, period, Nyquist"},
       {t:"text", html:"<b>Sampling</b> measures the analog signal every <b>sampling period T</b>; the <b>sampling rate f<sub>s</sub> = 1/T</b>. The <b>Nyquist frequency = f<sub>s</sub>/2</b> is the highest frequency digital audio can represent faithfully."},
       {t:"def", tag:"exam favorite", html:"<b>Why CD audio uses 44100 Hz</b>: the Nyquist frequency is then <b>44100/2 = 22050 Hz</b>, above the ~20 kHz limit of human hearing. Sample slower and audible frequencies alias away; sample faster and you store inaudible data."},
+      {t:"fx", id:"sCnyq"},
       {t:"h2", html:"Aliasing"},
       {t:"text", html:"If content above the Nyquist frequency is sampled, it doesn't disappear — it <b>aliases</b>: it masquerades as a lower, phantom frequency. Practical fixes: record at a rate above twice your highest frequency of interest, and low-pass (anti-alias) filter before sampling."},
       {t:"h2", html:"Quantization: bit depth"},
@@ -584,6 +613,7 @@ const D = {
       {t:"def", tag:"key numbers", html:"<b>Dynamic range:</b> the difference between the largest and smallest signal a system can record — it correlates with bit depth. <b>SQNR (signal-to-quantization-noise ratio):</b> relationship between maximum signal strength and quantization error; correlates with dynamic range."},
       {t:"h2", html:"The memory calculation — know this one"},
       {t:"def", tag:"work it by hand", html:"1 second of CD-quality mono sound: <br><b>44100 samples/s × 16 bits/sample = 705,600 bits = 88,200 bytes ≈ 86 kB.</b> Stereo doubles it; one minute of stereo ≈ 10 MB."},
+      {t:"fx", id:"sCmem"},
       {t:"h2", html:"Why this matters beyond audio"},
       {t:"text", html:"ADC and DAC are the general pipeline from the living world to your NumPy arrays: mic → ADC → samples → features → model. Any sensor workflow (Session 02) obeys the same two decisions: <b>when</b> to measure (rate vs Nyquist) and <b>how finely</b> to measure values (bit depth vs dynamic range)."}
     ],
@@ -713,6 +743,11 @@ function renderLesson(id){
       const host = document.createElement("div");
       body.appendChild(host);
       DEMOS[b.id](host);
+    }
+    else if (b.t === "fx"){
+      const host = document.createElement("div");
+      body.appendChild(host);
+      FX[b.id](host);
     }
   });
 
@@ -1212,6 +1247,216 @@ const DEMOS = {
     }
     inp.addEventListener("input", draw);
     draw();
+  }
+};
+
+/* ---------- formula cards ---------- */
+function fxTag(host, tag, eqHtml, varsHtml, controlsHtml){
+  host.classList.add("fx");
+  host.innerHTML = '<span class="fx-tag">' + tag + '</span>' +
+    '<div class="eq">' + eqHtml + '</div>' +
+    '<p class="vars">' + varsHtml + '</p>' +
+    '<div class="fx-controls">' + controlsHtml + '</div>';
+  return host.querySelector(".fx-out");
+}
+function fxNum(r){
+  if (r < 1000) return r.toFixed(r < 10 ? 2 : 0);
+  if (r < 1e6) return Math.round(r).toLocaleString("en-US");
+  return "10^" + (+Math.log10(r).toFixed(1));
+}
+
+const FX = {
+  /* Session 02 — sampling interval */
+  s2rate: function(host){
+    const out = fxTag(host,
+      "formula — from Session 02",
+      'T = <span class="frac"><b>1</b><i>f<sub>s</sub></i></span>',
+      '<b>f<sub>s</sub></b> = sampling rate (Hz) · <b>T</b> = the time between consecutive samples — the ADC\'s “when” decision.',
+      '<label>f<sub>s</sub> <input type="range" min="10" max="1000" step="10" value="1000"> Hz</label>' +
+      '<span class="fx-out"></span>');
+    const inp = host.querySelector('input[type="range"]');
+    function calc(){
+      const fs = +inp.value, T = 1/fs;
+      const t = T >= 0.001 ? (T*1000).toFixed(1) + " ms" : (T*1e6).toFixed(0) + " µs";
+      out.textContent = "T = 1/" + fs + " = " + t + " · " + fs.toLocaleString("en-US") + " samples in every second";
+    }
+    inp.addEventListener("input", calc); calc();
+  },
+
+  /* Session 03 — the sinusoid the deck plots */
+  s3sin: function(host){
+    const out = fxTag(host,
+      "formula — from Session 03",
+      'x(t) = A · sin(2π f t)',
+      '<b>A</b> = amplitude (bigger = taller swings) · <b>f</b> = frequency in Hz — the exact formula behind the deck\'s sine plot.',
+      '<label>A <input type="range" min="0.1" max="2" step="0.1" value="1"></label>' +
+      '<label>f <input type="range" min="1" max="10" step="1" value="5"> Hz</label>' +
+      '<span class="fx-out"></span>');
+    const inputs = host.querySelectorAll('input[type="range"]');
+    function calc(){
+      const A = +inputs[0].value, f = +inputs[1].value;
+      out.textContent = "x(t) = " + A.toFixed(1) + "·sin(2π·" + f + "·t) — " + f + " full cycles every second";
+    }
+    inputs.forEach(inp => inp.addEventListener("input", calc)); calc();
+  },
+
+  /* Session 04 — moving average, plugged into real numbers */
+  s4avg: function(host){
+    const out = fxTag(host,
+      "formula — from Session 04",
+      'y[n] = <span class="frac"><b>1</b><i>N</i></span> <span class="sum"><span class="lim">N−1</span><span class="op">Σ</span><span class="lim">j = 0</span></span> x[n−j]',
+      '<b>x[n−j]</b> = the most recent N input samples · <b>y[n]</b> = output — each sample replaced by the window\'s average.',
+      '<label>N <input type="range" min="1" max="7" step="1" value="3"></label>' +
+      '<span class="fx-out"></span>');
+    const inp = host.querySelector('input[type="range"]');
+    const X = [0.2, 0.8, 1.0, 0.4, -0.3, 0.6, -0.2];
+    function calc(){
+      const N = +inp.value, vals = X.slice(0, N);
+      const y = vals.reduce((a, v) => a + v, 0) / N;
+      const s = vals.map((v, i) =>
+        (i === 0 ? (v < 0 ? "−" : "") : (v < 0 ? " − " : " + ")) + Math.abs(v).toFixed(1)).join("");
+      out.textContent = "N = " + N + " · y[n] = (" + s + ")/" + N + " = " + y.toFixed(3);
+    }
+    inp.addEventListener("input", calc); calc();
+  },
+
+  /* Session 06 — event interval */
+  s6interval: function(host){
+    const out = fxTag(host,
+      "formula — from Session 06",
+      'Δt = t₂ − t₁',
+      'the interval between two detected events — it turns timings into rates (heart rate, step rate).',
+      '<label>t₁ <input type="range" min="0" max="3" step="0.1" value="2"> s</label>' +
+      '<label>t₂ <input type="range" min="0" max="3" step="0.1" value="2.6"> s</label>' +
+      '<span class="fx-out"></span>');
+    const inputs = host.querySelectorAll('input[type="range"]');
+    function calc(){
+      const d = +inputs[1].value - +inputs[0].value;
+      if (d <= 0){ out.textContent = "t₂ must come after t₁ — slide it further right"; return; }
+      out.textContent = "Δt = " + d.toFixed(1) + " s · that\'s " + (60/d).toFixed(0) + " such events per minute";
+    }
+    inputs.forEach(inp => inp.addEventListener("input", calc)); calc();
+  },
+
+  /* Session 06 — peak-to-peak */
+  s6p2p: function(host){
+    const out = fxTag(host,
+      "formula — from Session 06",
+      'PP = max − min',
+      'how far the signal swings overall — the deck\'s example starts at 1.21 and −0.83.',
+      '<label>max <input type="range" min="-1.5" max="1.5" step="0.01" value="1.21"></label>' +
+      '<label>min <input type="range" min="-1.5" max="1.5" step="0.01" value="-0.83"></label>' +
+      '<span class="fx-out"></span>');
+    const inputs = host.querySelectorAll('input[type="range"]');
+    function f(v){ return (+v).toFixed(2); }
+    function calc(){
+      const mx = +inputs[0].value, mn = +inputs[1].value;
+      if (mn > mx){ out.textContent = "min > max — swap them: PP = max − min ≥ 0"; return; }
+      out.textContent = f(mx) + " − (" + (mn < 0 ? "−" : "") + Math.abs(mn).toFixed(2) + ") = " + (mx - mn).toFixed(2);
+    }
+    inputs.forEach(inp => inp.addEventListener("input", calc)); calc();
+  },
+
+  /* Bonus A — period */
+  sAperiod: function(host){
+    const out = fxTag(host,
+      "formula — from Bonus A",
+      'T = <span class="frac"><b>1</b><i>f</i></span>',
+      '<b>T</b> = period, the length of one cycle in seconds · <b>f</b> = frequency (Hz).',
+      '<label>f <input type="range" min="100" max="1000" step="10" value="440"> Hz</label>' +
+      '<span class="fx-out"></span>');
+    const inp = host.querySelector('input[type="range"]');
+    function calc(){
+      const f = +inp.value;
+      out.textContent = "f = " + f + " Hz → T = 1/" + f + " = " + (1000/f).toFixed(2) + " ms · double f, period halves";
+    }
+    inp.addEventListener("input", calc); calc();
+  },
+
+  /* Bonus A — octaves via cents */
+  sAoct: function(host){
+    const out = fxTag(host,
+      "formula — from Bonus A",
+      'f₂ = f₁ · 2<sup>c / 1200</sup>',
+      '<b>c</b> = cents — 1200 cents = one octave, 100 cents = one semitone (deck: 440 Hz → 880 Hz is +1200).',
+      '<label>f₁ <input type="range" min="100" max="880" step="10" value="440"> Hz</label>' +
+      '<label>c <input type="range" min="-2400" max="2400" step="100" value="1200"> cents</label>' +
+      '<span class="fx-out"></span>');
+    const inputs = host.querySelectorAll('input[type="range"]');
+    function calc(){
+      const f1 = +inputs[0].value, c = +inputs[1].value;
+      const f2 = f1 * Math.pow(2, c/1200);
+      const sign = c < 0 ? "−" : "+";
+      out.textContent = f1 + " Hz " + sign + " " + Math.abs(c) + " cents → " + f2.toFixed(1) +
+        " Hz (" + (Math.abs(c)/100) + " semitones) · +100 cents ≈ ×1.0595";
+    }
+    inputs.forEach(inp => inp.addEventListener("input", calc)); calc();
+  },
+
+  /* Bonus B — decibels */
+  sBdb: function(host){
+    const out = fxTag(host,
+      "formula — from Bonus B",
+      'L = 10 · log₁₀ ( I / I₀ )',
+      '<b>I</b> = intensity (W/m²) · <b>I₀</b> = threshold of hearing · 0 dB is the threshold itself, +3 dB ≈ ×2 intensity.',
+      '<label>L <input type="range" min="0" max="120" step="3" value="60"> dB</label>' +
+      '<span class="fx-out"></span>');
+    const inp = host.querySelector('input[type="range"]');
+    function calc(){
+      const L = +inp.value;
+      out.textContent = L + " dB → intensity is ×" + fxNum(Math.pow(10, L/10)) + " the threshold of hearing";
+    }
+    inp.addEventListener("input", calc); calc();
+  },
+
+  /* Bonus C — Nyquist */
+  sCnyq: function(host){
+    const out = fxTag(host,
+      "formula — from Bonus C",
+      'f<sub>Nyquist</sub> = <span class="frac"><b>f<sub>s</sub></b><i>2</i></span>',
+      'the highest frequency a sampling rate can represent faithfully — half of fs (deck: 44100 → 22050 Hz).',
+      '<label>f<sub>s</sub> <input type="range" min="8000" max="96000" step="100" value="44100"> Hz</label>' +
+      '<span class="fx-out"></span>');
+    const inp = host.querySelector('input[type="range"]');
+    function calc(){
+      const fs = +inp.value, ny = fs/2;
+      out.textContent = "fs = " + fs.toLocaleString("en-US") + " Hz → Nyquist = " + ny.toLocaleString("en-US") +
+        " Hz " + (ny >= 20000 ? "— above the ~20 kHz hearing limit" : "— below the ~20 kHz limit: audible tones would alias");
+    }
+    inp.addEventListener("input", calc); calc();
+  },
+
+  /* Bonus C — byte rate */
+  sCmem: function(host){
+    let fsv = 44100, bv = 16;
+    const out = fxTag(host,
+      "formula — from Bonus C",
+      'bytes/s = <span class="frac"><b>f<sub>s</sub> × bit depth</b><i>8</i></span>',
+      'per second of mono sound — the deck\'s number: 44100 × 16 ÷ 8 = 88,200 bytes ≈ 86 kB.',
+      '<button class="winbtn" type="button" data-v="22050" aria-pressed="false">22.05 kHz</button>' +
+      '<button class="winbtn" type="button" data-v="44100" aria-pressed="true">44.1 kHz</button>' +
+      '<button class="winbtn" type="button" data-v="48000" aria-pressed="false">48 kHz</button>' +
+      '<label>bit depth</label>' +
+      '<button class="winbtn" type="button" data-b="8" aria-pressed="false">8</button>' +
+      '<button class="winbtn" type="button" data-b="16" aria-pressed="true">16</button>' +
+      '<button class="winbtn" type="button" data-b="24" aria-pressed="false">24</button>' +
+      '<span class="fx-out"></span>');
+    function calc(){
+      const bps = fsv*bv/8;
+      out.textContent = fsv.toLocaleString("en-US") + " × " + bv + " ÷ 8 = " + Math.round(bps).toLocaleString("en-US") +
+        " bytes/s ≈ " + (bps/1024).toFixed(0) + " kB mono · stereo ×2 · 1 min stereo = " + (bps*2*60/1e6).toFixed(1) + " MB";
+    }
+    host.querySelectorAll('.winbtn[data-v]').forEach(b => b.onclick = () => {
+      fsv = +b.dataset.v;
+      host.querySelectorAll('.winbtn[data-v]').forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      calc();
+    });
+    host.querySelectorAll('.winbtn[data-b]').forEach(b => b.onclick = () => {
+      bv = +b.dataset.b;
+      host.querySelectorAll('.winbtn[data-b]').forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      calc();
+    });
+    calc();
   }
 };
 
