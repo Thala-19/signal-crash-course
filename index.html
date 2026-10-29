@@ -75,6 +75,17 @@
   .winbtn[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
   .scope-hint{margin-left:auto}
 
+  /* ---------- lesson demos ---------- */
+  .demo{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:16px 0;overflow:hidden}
+  .demo canvas{display:block;width:100%;height:170px}
+  .demo-controls{display:flex;align-items:center;gap:14px;padding:10px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);flex-wrap:wrap}
+  .demo-controls label{display:flex;align-items:center;gap:7px;font-family:"IBM Plex Mono";white-space:nowrap}
+  .demo-controls input[type=range]{width:120px;accent-color:var(--amber-bright)}
+  .demo-read{font-family:"IBM Plex Mono";margin-left:auto;color:var(--navy);text-align:right;max-width:44ch}
+  @media (max-width:640px){
+    .demo-read{margin-left:0;text-align:left;flex-basis:100%}
+  }
+
   .lessons{margin-top:34px}
   .group-label{
     font-family:"Space Grotesk";font-size:14px;font-weight:600;color:var(--muted);
@@ -297,6 +308,7 @@ const D = {
       {t:"h2", html:"Continuous vs discrete time"},
       {t:"text", html:"A <b>continuous-time</b> signal exists at every instant (a smoothly changing voltage). A <b>discrete-time</b> signal exists only at distinct, usually equally spaced samples — and that discrete version is what computers actually work with."},
       {t:"text", html:"Converting analog to digital takes <b>two steps</b>: <b>sampling</b> at regular intervals and <b>quantizing</b> to a finite set of levels. More samples and levels mean a more faithful copy — at the cost of more data."},
+      {t:"demo", id:"adc"},
       {t:"h2", html:"The Python toolbox"},
       {t:"code", html:"<span class='kw'>import</span> numpy <span class='kw'>as</span> np   <span class='cmt'># arrays</span>\n<span class='kw'>from</span> scipy <span class='kw'>import</span> signal <span class='cmt'># filters and transforms</span>\n<span class='kw'>import</span> matplotlib.pyplot <span class='kw'>as</span> plt  <span class='cmt'># plotting</span>\n<span class='kw'>import</span> librosa  <span class='cmt'># audio</span>\n\nt = np.linspace(<span class='fn'>0</span>, <span class='fn'>1</span>, <span class='fn'>1000</span>)\nsignal = np.sin(<span class='fn'>2</span>*np.pi*<span class='fn'>5</span>*t)  <span class='cmt'># 5 Hz sine</span>\nplt.plot(t, signal); plt.show()"}
     ],
@@ -331,6 +343,7 @@ const D = {
       {t:"h2", html:"Sampling rate"},
       {t:"text", html:"The sampling rate decides how often the signal is measured. Low rate: less data, but may miss important changes. High rate: captures fast changes, at the cost of more data. Match the rate to the phenomenon: <b>temperature changes slowly, human movement moderately, speech faster, machine vibration rapidly.</b>"},
       {t:"def", tag:"key number", html:"If fs = 1000 Hz, the system takes 1000 samples per second, so consecutive samples are separated by <b>1 ms</b>."},
+      {t:"demo", id:"samplerate"},
       {t:"h2", html:"In software"},
       {t:"text", html:"Once acquired, the signal is a numerical array. Each value is the measurement at one sampling instant; with fs known, you can reconstruct the time axis exactly."},
       {t:"pipe", html:"<b>Sensor</b> <span class='arr'>→</span> <b>Signal conditioning</b> <span class='arr'>→</span> <b>ADC</b> <span class='arr'>→</span> <b>DAQ device</b> <span class='arr'>→</span> <b>Computer</b> <span class='arr'>→</span> <b>Signal processing</b>"}
@@ -364,6 +377,7 @@ const D = {
         ["Overlay (same graph)","Easy comparison, seeing relationships","Clutters quickly"],
         ["Subplots (own graphs)","Cleaner, separate scales and labels","Needs more space"]]},
       {t:"text", html:"Subplots let related signals (like accelerometer X/Y/Z, or multi-channel ECG) be viewed together while keeping separate scales and labels."},
+      {t:"demo", id:"subplots"},
       {t:"text", html:"Interpretation checklist: is there a <b>trend</b>? <b>periodicity</b>? <b>events</b>? <b>noise</b>? Do multiple signals change <b>together</b>? Visualization is not the end — it guides the next decisions (filtering, feature extraction, analysis)."}
     ],
     quiz:[
@@ -397,6 +411,7 @@ const D = {
       {t:"h2", html:"Moving average"},
       {t:"def", tag:"know by heart", html:"A moving average <b>replaces each sample with the average of the N neighboring samples</b> — a small window keeps detail with less smoothing; a large window smooths more but can remove important rapid changes. <b>More smoothing is not always better.</b>"},
       {t:"code", html:"window = <span class='fn'>10</span>\nkernel = np.ones(window) / window      <span class='cmt'># averaging weights</span>\nfiltered = np.convolve(signal, kernel, mode=<span class='str'>\"same\"</span>)\n\n<span class='cmt'># evaluate: compare original vs filtered</span>\nplt.plot(signal, label=<span class='str'>\"Original\"</span>)\nplt.plot(filtered, label=<span class='str'>\"Filtered\"</span>)\nplt.legend(); plt.show()"},
+      {t:"demo", id:"movingavg"},
       {t:"h2", html:"The trade-off"},
       {t:"def", tag:"the line to remember", html:"Too little filtering → noise remains. Too much → important features are lost. <b>The goal is not the smoothest signal. The goal is the most useful signal.</b>"}
     ],
@@ -430,6 +445,7 @@ const D = {
       {t:"code", html:"<span class='kw'>from</span> scipy <span class='kw'>import</span> signal\n\nb, a = signal.butter(\n    <span class='fn'>4</span>,            <span class='cmt'># filter order</span>\n    <span class='fn'>10</span>,           <span class='cmt'># cutoff frequency (Hz)</span>\n    btype=<span class='str'>\"lowpass\"</span>,   <span class='cmt'># filter type</span>\n    fs=<span class='fn'>1000</span>       <span class='cmt'># sampling frequency — must match your data</span>\n)\n\nfiltered = signal.filtfilt(b, a, x)  <span class='cmt'># zero-phase filtering</span>"},
       {t:"text", html:"<b>signal.butter()</b> designs a Butterworth filter; the arguments are (order, cutoff, filter type, sampling frequency). <b>signal.filtfilt()</b> applies it forward and backward, which means <b>no phase distortion and no time delay</b>. Higher order → sharper transition near the cutoff, at more computational cost. Python lets you apply established algorithms without manually implementing every operation."},
       {t:"text", html:"Know the practical knobs: <b>sampling frequency</b>, <b>filter type</b>, <b>cutoff frequency</b>, <b>filter order</b>, the signal's characteristics, the features you care about, and computational requirements. <b>There is no universally “best” filter</b> — the right choice depends on the signal and the objective."},
+      {t:"demo", id:"filterdemo"},
       {t:"h2", html:"Did the filter work? Ask four questions"},
       {t:"list", items:["Was unwanted noise reduced?","Were important features preserved?","Did the signal shape change significantly?","Was useful information lost?"]},
       {t:"text", html:"A filter is successful only if the resulting signal is <b>more useful for the intended analysis</b> — noise reduction AND information preservation, checked side by side."},
@@ -458,6 +474,7 @@ const D = {
       {t:"text", html:"A <b>peak</b> is a local maximum; a <b>valley</b> a local minimum. They mark meaningful events: heartbeats, footsteps, vibration cycles. Detecting repeated events lets you analyze their <b>timing</b>: if events occur at t₁ and t₂, the interval is t₂ − t₁. Example: peaks at 2.0 s and 2.6 s → interval = <b>0.6 s</b>. Intervals describe <b>heart rate, step rate, machine cycle duration, periodicity</b>. An ECG's <b>R-peaks</b> are the classic example for separating individual heartbeats."},
       {t:"h2", html:"Automatic detection"},
       {t:"text", html:"A peak detector searches for local maxima and considers <b>peak height</b>, <b>prominence</b> and <b>minimum distance</b> between peaks. A threshold detector fires when the signal crosses a threshold (e.g. acceleration exceeds a limit). Threshold choice matters: <b>too low → false detections · too high → missed events</b>. Robust detectors combine conditions — e.g. a peak must be <b>amplitude ≥ X AND separated by ≥ distance</b> from the previous one, which prevents double-detecting one event."},
+      {t:"demo", id:"peaks"},
       {t:"h2", html:"Segmentation"},
       {t:"text", html:"Segmentation divides a continuous signal into smaller regions analyzed separately — individual heartbeats, footsteps, speech segments, machine cycles. Once an event is detected, an <b>event window</b> captures the signal before it, during it, and after it. This turns a long recording into manageable units you can compare, describe per-event, scan for anomalies, and turn into ML datasets."},
       {t:"h2", html:"Feature families"},
@@ -497,6 +514,7 @@ const D = {
         ["<b>Amplitude</b>","Magnitude of the pressure change","Larger amplitude → louder"],
         ["<b>Phase</b>","Position in the cycle","Relative phase shapes interference"]]},
       {t:"text", html:"Quick check: a tone of <b>f = 440 Hz</b> has a period <b>T = 1/440 s ≈ 2.27 ms</b>."},
+      {t:"demo", id:"wave"},
       {t:"h2", html:"Pitch is logarithmic"},
       {t:"def", tag:"exam favorite", html:"<b>Pitch perception is logarithmic</b>: two frequencies are perceived as similar if they differ by a <b>power of 2</b>. Doubling the frequency = one <b>octave</b>: 440 Hz → 880 Hz is the octave above A4. MIDI note numbering follows this: an octave = 12 MIDI steps."},
       {t:"h2", html:"Cents"},
@@ -531,6 +549,7 @@ const D = {
       {t:"h2", html:"Timbre — the colour of sound"},
       {t:"def", tag:"exam favorite", html:"<b>Timbre</b> is the quality that distinguishes two sounds with the <b>same intensity, frequency and duration</b> — words like bright, dark, dull, harsh, warm. It is <b>multidimensional</b>: the <b>amplitude envelope</b>, the <b>harmonic content</b>, and <b>modulation</b> (frequency or amplitude)."},
       {t:"text", html:"<b>Envelope</b> follows the <b>ADSR model</b>: attack, decay, sustain, release — the shape of the sound's amplitude over time."},
+      {t:"demo", id:"adsr"},
       {t:"h2", html:"Harmonics and modulation"},
       {t:"list", items:["A <b>complex sound</b> is a superposition of sinusoids; each sinusoid is a <b>partial</b>","The lowest partial is the <b>fundamental frequency</b>","A <b>harmonic partial</b> is at a multiple of the fundamental; <b>inharmonicity</b> measures deviation from exact multiples","<b>Frequency modulation</b> = vibrato; <b>amplitude modulation</b> = tremolo — in music used for expression"]},
       {t:"text", html:"Harmonic instruments (strings, brass, most wind) stack near-multiples of a fundamental; inharmonic ones (drums, bells, cymbals) don't — one reason metallic sounds sound metallic."}
@@ -561,6 +580,7 @@ const D = {
       {t:"text", html:"If content above the Nyquist frequency is sampled, it doesn't disappear — it <b>aliases</b>: it masquerades as a lower, phantom frequency. Practical fixes: record at a rate above twice your highest frequency of interest, and low-pass (anti-alias) filter before sampling."},
       {t:"h2", html:"Quantization: bit depth"},
       {t:"text", html:"<b>Quantization</b> rounds each sample's amplitude to a finite level. <b>Resolution = bit depth</b>: n bits give 2ⁿ levels. <b>CD resolution = 16 bits → 65,536 levels.</b> More bit depth means smaller quantization error."},
+      {t:"demo", id:"quant"},
       {t:"def", tag:"key numbers", html:"<b>Dynamic range:</b> the difference between the largest and smallest signal a system can record — it correlates with bit depth. <b>SQNR (signal-to-quantization-noise ratio):</b> relationship between maximum signal strength and quantization error; correlates with dynamic range."},
       {t:"h2", html:"The memory calculation — know this one"},
       {t:"def", tag:"work it by hand", html:"1 second of CD-quality mono sound: <br><b>44100 samples/s × 16 bits/sample = 705,600 bits = 88,200 bytes ≈ 86 kB.</b> Stereo doubles it; one minute of stereo ≈ 10 MB."},
@@ -608,6 +628,7 @@ function paintProgress(){
 
 /* ---------- router ---------- */
 function go(view, lessonId){
+  clearDemos();
   document.querySelectorAll("main > section").forEach(s => s.classList.remove("on"));
   document.getElementById("view-" + view).classList.add("on");
   window.scrollTo(0, 0);
@@ -687,6 +708,11 @@ function renderLesson(id){
     else if (b.t === "code"){
       const pre = document.createElement("pre");
       pre.innerHTML = "<code>" + b.html + "</code>"; body.appendChild(pre);
+    }
+    else if (b.t === "demo"){
+      const host = document.createElement("div");
+      body.appendChild(host);
+      DEMOS[b.id](host);
     }
   });
 
@@ -804,6 +830,390 @@ function gradeExam(){
     </div>`;
   paintProgress();
 }
+
+/* ---------- interactive lesson demos ---------- */
+const AMBER = "#E8830C", NAVY = "#1E3A5F", GRAY = "rgba(30,58,95,.30)";
+let demoStops = [];
+function clearDemos(){ demoStops.forEach(f => { try { f(); } catch(e){} }); demoStops = []; }
+
+function demoShell(host, controlsHtml){
+  host.classList.add("demo");
+  host.innerHTML = '<canvas role="img" aria-label="Interactive lesson demo"></canvas>' +
+    '<div class="demo-controls">' + controlsHtml + '</div>';
+  const cv = host.querySelector("canvas");
+  const ctx = cv.getContext("2d");
+  const readEl = host.querySelector(".demo-read");
+  const d = {
+    read(t){ if (readEl) readEl.textContent = t; },
+    frame(fn){
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Math.max(320, cv.clientWidth || 640) * dpr, h = 170 * dpr;
+      cv.width = w; cv.height = h;
+      fn(ctx, w, h, dpr);
+    }
+  };
+  d.update = function(fn){ d._u = fn; d.frame(fn); };
+  const onResize = () => { if (d._u) d.frame(d._u); };
+  addEventListener("resize", onResize);
+  demoStops.push(() => removeEventListener("resize", onResize));
+  return d;
+}
+function dGrid(ctx, w, h, mid){
+  if (mid === undefined) mid = h / 2;
+  ctx.strokeStyle = "rgba(30,58,95,.08)"; ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += Math.max(28, w/16)){ ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 28){ ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  if (mid >= 0){
+    ctx.strokeStyle = "rgba(30,58,95,.18)";
+    ctx.beginPath(); ctx.moveTo(0, mid); ctx.lineTo(w, mid); ctx.stroke();
+  }
+}
+function dPath(ctx, ys, w, h, o){
+  o = o || {};
+  const mid = (o.mid !== undefined) ? o.mid : h/2;
+  const amp = (o.amp !== undefined) ? o.amp : h*0.36;
+  const n = ys.length;
+  ctx.beginPath();
+  for (let i = 0; i < n; i++){
+    const x = i/(n-1)*w, y = mid - ys[i]*amp;
+    if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+  }
+  ctx.strokeStyle = o.color || AMBER;
+  ctx.lineWidth = o.lw || 2.4;
+  if (o.dash) ctx.setLineDash(o.dash);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+function dText(ctx, t, x, y, size, color, align){
+  ctx.font = (size || 12) + 'px "IBM Plex Mono", monospace';
+  ctx.fillStyle = color || "#5A6B7B";
+  ctx.textAlign = align || "left";
+  ctx.fillText(t, x, y);
+}
+function dBtns(host, onChange){
+  const btns = host.querySelectorAll("button.winbtn");
+  let mode = btns[0].dataset.m;
+  btns.forEach(b => b.onclick = () => {
+    mode = b.dataset.m;
+    btns.forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    onChange();
+  });
+  return () => mode;
+}
+
+const DEMOS = {
+  /* Session 01 — analog → digital: sampling + quantization */
+  adc: function(host){
+    const d = demoShell(host,
+      '<span>The same 3 Hz wave under two conversion decisions:</span>' +
+      '<label>samples <input type="range" min="6" max="120" value="24"></label>' +
+      '<label>bit depth <input type="range" min="1" max="5" value="2"></label>' +
+      '<span class="demo-read"></span>');
+    const inputs = host.querySelectorAll('input[type="range"]');
+    function draw(){
+      const N = +inputs[0].value, b = +inputs[1].value, L = Math.pow(2, b);
+      d.update((ctx, w, h) => {
+        dGrid(ctx, w, h);
+        const mid = h/2, amp = h*0.36, M = 240, ys = [];
+        for (let i = 0; i < M; i++) ys.push(Math.sin(i/(M-1) * Math.PI * 6));
+        dPath(ctx, ys, w, h, {mid, amp, color: GRAY, lw: 1.4});
+        for (let i = 0; i < N; i++){
+          const t = i/(N-1), v = Math.sin(t*Math.PI*6);
+          const q = Math.round((v+1)/2*(L-1))/(L-1)*2-1;
+          const x = Math.max(0, t*w - w/(N*2));
+          ctx.fillRect(x, mid - q*amp, w/N, Math.max(1.2, h*0.008));
+        }
+      });
+      d.read(N + " samples · " + L + " levels (" + b + "-bit) · gray = analog in, amber = digital out");
+    }
+    inputs.forEach(inp => inp.addEventListener("input", draw));
+    draw();
+  },
+
+  /* Session 02 — sampling rate and what it misses */
+  samplerate: function(host){
+    const d = demoShell(host,
+      '<span>Measurement interval matters — the true signal has a 7 kHz-class wobble scaled here to 7 Hz:</span>' +
+      '<label>fs <input type="range" min="4" max="64" value="12"> Hz</label>' +
+      '<span class="demo-read"></span>');
+    const inp = host.querySelector('input[type="range"]');
+    function sig(t){ return 0.45*Math.sin(2*Math.PI*0.4*t) + 0.45*Math.sin(2*Math.PI*7*t); }
+    function draw(){
+      const fs = +inp.value;
+      d.update((ctx, w, h) => {
+        dGrid(ctx, w, h);
+        const mid = h/2, amp = h*0.36, M = 360, ys = [];
+        for (let i = 0; i < M; i++) ys.push(sig(i/M));
+        dPath(ctx, ys, w, h, {mid, amp, color: GRAY, lw: 1.2});
+        const py = [];
+        for (let k = 0; k <= fs; k++) py.push(sig(k/fs));
+        dPath(ctx, py, w, h, {mid, amp, color: "rgba(232,131,12,.9)", lw: 2});
+        for (let k = 0; k <= fs; k++){
+          const x = k/fs*w, y = mid - sig(k/fs)*amp;
+          ctx.fillStyle = AMBER;
+          ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill();
+        }
+      });
+      const alias = fs/2 < 7;
+      d.read("fs = " + fs + " Hz → Nyquist = " + (fs/2).toFixed(0) + " Hz " +
+        (alias ? "— the 7 Hz wobble aliases: amber follows a slow phantom wave" : "— the 7 Hz wobble is captured"));
+    }
+    inp.addEventListener("input", draw);
+    draw();
+  },
+
+  /* Session 03 — overlay vs subplots */
+  subplots: function(host){
+    const d = demoShell(host,
+      '<span>Two accelerometer channels, very different scales:</span>' +
+      '<button class="winbtn" data-m="over" aria-pressed="true" type="button">Overlay</button>' +
+      '<button class="winbtn" data-m="sub" aria-pressed="false" type="button">Subplots</button>' +
+      '<span class="demo-read"></span>');
+    const mode = dBtns(host, draw);
+    const M = 300, xs = [], ys = [];
+    for (let i = 0; i < M; i++){
+      const t = i/(M-1);
+      xs.push(0.6*Math.sin(2*Math.PI*1.3*t));
+      ys.push(0.10*Math.sin(2*Math.PI*6.5*t + 1));
+    }
+    function draw(){
+      d.update((ctx, w, h) => {
+        if (mode() === "over"){
+          dGrid(ctx, w, h);
+          const mid = h/2, amp = h*0.36;
+          dPath(ctx, xs, w, h, {mid, amp, color: NAVY, lw: 2.2});
+          dPath(ctx, ys, w, h, {mid, amp, color: AMBER, lw: 2});
+          dText(ctx, "X (large)", 10, mid - 0.6*amp - 6, 12, NAVY);
+          dText(ctx, "Y (small)", 10, mid - 0.10*amp - 6, 12, AMBER);
+        } else {
+          const hTop = h*0.46, mTop = hTop*0.52;
+          dGrid(ctx, w, hTop, mTop);
+          dPath(ctx, xs, w, hTop, {mid: mTop, amp: hTop*0.37, color: NAVY, lw: 2.2});
+          dText(ctx, "X · own scale", 10, 14, 12, NAVY);
+          ctx.save(); ctx.translate(0, hTop + 6);
+          const h2 = h - hTop - 12, m2 = h2/2;
+          dGrid(ctx, w, h2, m2);
+          dPath(ctx, ys, w, h2, {mid: m2, amp: h2*0.36, color: AMBER, lw: 2});
+          dText(ctx, "Y · own scale", 10, 14, 12, AMBER);
+          ctx.restore();
+        }
+      });
+      d.read(mode() === "over"
+        ? "Overlay: easy to compare — but tiny Y hugs the baseline and is nearly unreadable"
+        : "Subplots: each channel keeps its own scale and labels — Y is fully readable");
+    }
+    draw();
+  },
+
+  /* Session 04 — moving average vs a sharp event */
+  movingavg: function(host){
+    const d = demoShell(host,
+      '<span>One sharp event hiding in sensor noise. Window size N:</span>' +
+      '<label>N <input type="range" min="1" max="60" value="9"></label>' +
+      '<span class="demo-read"></span>');
+    const inp = host.querySelector('input[type="range"]');
+    const M = 340, CB = Math.round(0.62*M), raw = [];
+    for (let i = 0; i < M; i++){
+      const t = i/M*Math.PI*7;
+      raw.push(Math.sin(t)*0.5 + Math.sin(t*13.7)*0.15 + Math.sin(t*27.3 + 1)*0.10 +
+        Math.sin(t*97.1)*0.05 + 0.8*Math.exp(-Math.pow((i-CB)/11, 2)));
+    }
+    function draw(){
+      const N = +inp.value, sm = [];
+      for (let i = 0; i < M; i++){
+        let s = 0, c = 0;
+        for (let j = Math.max(0, i-N); j <= i; j++){ s += raw[j]; c++; }
+        sm.push(s/c);
+      }
+      d.update((ctx, w, h) => {
+        dGrid(ctx, w, h);
+        const mid = h/2, amp = h*0.34;
+        dPath(ctx, raw, w, h, {mid, amp, color: GRAY, lw: 1.4});
+        dPath(ctx, sm, w, h, {mid, amp, color: AMBER, lw: 2.6});
+      });
+      const kept = sm[CB] > 0.5;
+      d.read("N = " + N + (kept
+        ? " — the sharp event still stands out above its noise"
+        : " — the event is blurred away: more smoothing is not always better"));
+    }
+    inp.addEventListener("input", draw);
+    draw();
+  },
+
+  /* Session 05 — filter choice + cutoff */
+  filterdemo: function(host){
+    const d = demoShell(host,
+      '<span>A slow drift plus rapid jitter — pick the right filter:</span>' +
+      '<button class="winbtn" data-m="lp" aria-pressed="true" type="button">Low-pass</button>' +
+      '<button class="winbtn" data-m="hp" aria-pressed="false" type="button">High-pass</button>' +
+      '<label>cutoff <input type="range" min="1" max="50" value="18"></label>' +
+      '<span class="demo-read"></span>');
+    const mode = dBtns(host, draw);
+    const inp = host.querySelector('input[type="range"]');
+    const M = 320, y = [];
+    for (let i = 0; i < M; i++){
+      const t = i/(M-1);
+      y.push(0.42*Math.sin(2*Math.PI*0.25*t) + 0.08 +
+        0.20*Math.sin(2*Math.PI*9.5*t) + 0.11*Math.sin(2*Math.PI*17.3*t + 2) +
+        0.04*Math.sin(i*2.7)*Math.sin(i*1.3));
+    }
+    function draw(){
+      const a = +inp.value/50, lp = [];
+      let s = y[0];
+      for (let i = 0; i < M; i++){ s += a * (y[i] - s); lp.push(s); }
+      d.update((ctx, w, h) => {
+        dGrid(ctx, w, h);
+        const mid = h/2, amp = h*0.34;
+        dPath(ctx, y, w, h, {mid, amp, color: GRAY, lw: 1.4});
+        dPath(ctx, mode() === "lp" ? lp : y.map((v, i) => v - lp[i]), w, h,
+          {mid, amp, color: AMBER, lw: 2.4});
+      });
+      d.read(mode() === "lp"
+        ? "Low-pass: the trend survives, the jitter is gone — lower cutoff = heavier smoothing"
+        : "High-pass: the drift drops out, rapid changes remain — cutoff sets how much drift is removed");
+    }
+    inp.addEventListener("input", draw);
+    draw();
+  },
+
+  /* Session 06 — peak/threshold detection tuning */
+  peaks: function(host){
+    const d = demoShell(host,
+      '<span>Five true beats buried among small noise bumps:</span>' +
+      '<label>min height <input type="range" min="0.1" max="1.4" step="0.05" value="0.6"></label>' +
+      '<label>min distance <input type="range" min="4" max="80" value="16"></label>' +
+      '<span class="demo-read"></span>');
+    const inputs = host.querySelectorAll('input[type="range"]');
+    const M = 400, beats = [{c:56,h:0.45},{c:128,h:0.75},{c:206,h:1.2},{c:288,h:0.7},{c:352,h:1.0}],
+      decoys = [{c:92,h:0.30},{c:168,h:0.26},{c:247,h:0.30},{c:322,h:0.24}], y = [];
+    for (let i = 0; i < M; i++){
+      let v = 0.05*Math.sin(i*0.9) + 0.03*Math.sin(i*2.3 + 1);
+      beats.forEach(p => { v += p.h*Math.exp(-Math.pow((i-p.c)/9, 2)); });
+      decoys.forEach(p => { v += p.h*Math.exp(-Math.pow((i-p.c)/4, 2)); });
+      y.push(v);
+    }
+    function detect(H, D){
+      const found = [];
+      for (let i = 2; i < M-2; i++){
+        if (y[i] < H) continue;
+        let isMax = true;
+        for (let j = Math.max(0, i-6); j <= Math.min(M-1, i+6); j++){
+          if (y[j] > y[i]){ isMax = false; break; }
+        }
+        if (!isMax) continue;
+        if (found.length && i - found[found.length-1] < D) continue;
+        found.push(i);
+      }
+      return found;
+    }
+    function draw(){
+      const H = +inputs[0].value, D = +inputs[1].value, found = detect(H, D);
+      d.update((ctx, w, h, dpr) => {
+        dGrid(ctx, w, h);
+        const mid = h*0.62, amp = h*0.42;
+        dPath(ctx, y, w, h, {mid, amp, color: NAVY, lw: 1.8});
+        ctx.strokeStyle = "rgba(180,35,24,.55)"; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(0, mid - H*amp); ctx.lineTo(w, mid - H*amp); ctx.stroke();
+        ctx.setLineDash([]);
+        found.forEach(i => {
+          ctx.fillStyle = AMBER;
+          ctx.beginPath(); ctx.arc(i/(M-1)*w, mid - y[i]*amp, 4.5*(dpr||1), 0, 7); ctx.fill();
+        });
+      });
+      d.read(found.length === 5
+        ? "height ≥ " + H + " · distance ≥ " + D + " — all five beats detected, no extras"
+        : found.length < 5
+          ? found.length + "/5 beats — smaller bumps got missed (threshold too high)"
+          : found.length + "/5 beats — noise bumps fired too (threshold too low)");
+    }
+    inputs.forEach(inp => inp.addEventListener("input", draw));
+    draw();
+  },
+
+  /* Bonus A — frequency, amplitude, period */
+  wave: function(host){
+    const d = demoShell(host,
+      '<span>A tone under your fingers — frequency and amplitude:</span>' +
+      '<label>frequency <input type="range" min="100" max="1000" step="10" value="440"> Hz</label>' +
+      '<label>amplitude <input type="range" min="0.1" max="1" step="0.05" value="0.7"></label>' +
+      '<span class="demo-read"></span>');
+    const inputs = host.querySelectorAll('input[type="range"]');
+    function draw(){
+      const f = +inputs[0].value, a = +inputs[1].value;
+      const cycles = Math.max(1, Math.round(f/110));
+      d.update((ctx, w, h) => {
+        dGrid(ctx, w, h);
+        const mid = h/2, amp = h*0.34*a, M = 300, ys = [];
+        for (let i = 0; i < M; i++) ys.push(Math.sin(i/(M-1)*2*Math.PI*cycles));
+        dPath(ctx, ys, w, h, {mid, amp, color: NAVY, lw: 2});
+      });
+      d.read(f + " Hz · T = 1/f = " + (1000/f).toFixed(2) + " ms · octave up = " + (f*2) +
+        " Hz · octave down = " + (f/2).toFixed(0) + " Hz");
+    }
+    inputs.forEach(inp => inp.addEventListener("input", draw));
+    draw();
+  },
+
+  /* Bonus B — ADSR envelope */
+  adsr: function(host){
+    const d = demoShell(host,
+      '<span>The amplitude envelope of one note — shape it stage by stage:</span>' +
+      '<label>attack <input type="range" min="0.01" max="0.8" step="0.01" value="0.07"> s</label>' +
+      '<label>decay <input type="range" min="0.01" max="0.8" step="0.01" value="0.12"> s</label>' +
+      '<label>sustain <input type="range" min="0" max="1" step="0.05" value="0.6"></label>' +
+      '<label>release <input type="range" min="0.01" max="1" step="0.01" value="0.3"> s</label>' +
+      '<span class="demo-read"></span>');
+    const inputs = host.querySelectorAll('input[type="range"]');
+    function draw(){
+      const A = +inputs[0].value, D = +inputs[1].value, S = +inputs[2].value, R = +inputs[3].value;
+      const total = A + D + R;
+      d.update((ctx, w, h) => {
+        dGrid(ctx, w, h, -1);
+        const base = h*0.62, top = h*0.12, susY = base - (base - top)*S;
+        const xA = A/total*w*0.78, xD = (A + D)/total*w*0.78, xS = w - R/total*w*0.78;
+        ctx.beginPath(); ctx.moveTo(0, base);
+        [[xA, top],[xD, susY],[xS, susY],[w, base]].forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+        ctx.fillStyle = "rgba(232,131,12,.14)"; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(0, base);
+        [[xA, top],[xD, susY],[xS, susY],[w, base]].forEach(p => ctx.lineTo(p[0], p[1]));
+        ctx.strokeStyle = AMBER; ctx.lineWidth = 2.6; ctx.stroke();
+        dText(ctx, "A", xA/2 - 4, h - 8, 12, NAVY);
+        dText(ctx, "D", (xA + xD)/2 - 4, h - 8, 12, NAVY);
+        dText(ctx, "S", (xD + xS)/2 - 4, h - 8, 12, NAVY);
+        dText(ctx, "R", (xS + w)/2 - 5, h - 8, 12, NAVY);
+      });
+      d.read("attack " + A + " s · decay " + D + " s · sustain " + Math.round(S*100) + "% · release " + R + " s");
+    }
+    inputs.forEach(inp => inp.addEventListener("input", draw));
+    draw();
+  },
+
+  /* Bonus C — bit depth / quantization */
+  quant: function(host){
+    const d = demoShell(host,
+      '<span>How finely do we round each amplitude? Bit depth decides:</span>' +
+      '<label>bit depth <input type="range" min="1" max="6" value="3"></label>' +
+      '<span class="demo-read"></span>');
+    const inp = host.querySelector('input[type="range"]');
+    function draw(){
+      const b = +inp.value, L = Math.pow(2, b);
+      d.update((ctx, w, h) => {
+        dGrid(ctx, w, h);
+        const mid = h/2, amp = h*0.34, M = 300, ys = [];
+        for (let i = 0; i < M; i++) ys.push(Math.sin(i/(M-1)*2*Math.PI*3));
+        dPath(ctx, ys, w, h, {mid, amp, color: GRAY, lw: 1.4});
+        dPath(ctx, ys.map(v => Math.round((v + 1)/2*(L-1))/(L-1)*2 - 1), w, h,
+          {mid, amp, color: AMBER, lw: 2.2});
+      });
+      const kb = (44100*b/8/1024).toFixed(1);
+      d.read(L + " levels (" + b + "-bit) · dynamic range ≈ " + (6.02*b + 1.76).toFixed(0) +
+        " dB · mono at 44.1 kHz ≈ " + kb + " kB/s");
+    }
+    inp.addEventListener("input", draw);
+    draw();
+  }
+};
 
 /* ---------- oscilloscope hero: noisy sine + moving average ---------- */
 (function(){
